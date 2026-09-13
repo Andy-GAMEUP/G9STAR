@@ -1,0 +1,21 @@
+{
+  "name": "earthplayground-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch --experimental-strip-types src/server.ts",
+    "start": "node --experimental-strip-types src/server.ts",
+    "worker": "node --experimental-strip-types src/worker.ts",
+    "migrate": "node --experimental-strip-types src/migrate.ts",
+    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "test:postgres": "node --experimental-strip-types --test test/postgres.integration.test.ts"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "jose": "^6.2.12",
+    "pg": "^8.23.0"
+  }
+}

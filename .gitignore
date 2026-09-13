@@ -1,0 +1,28 @@
+# dependencies
+node_modules/
+
+# runtime image uploads (local storage — not source)
+uploads/
+backend/uploads/
+backend/uploads-*/
+
+# env & secrets
+.env
+.env.local
+*.env.local
+
+# logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# build output
+dist/
+build/
+
+# Claude Code local tooling state
+.claude/

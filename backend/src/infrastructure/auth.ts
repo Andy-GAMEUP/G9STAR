@@ -1,0 +1,6 @@
+import {jwtVerify,SignJWT} from 'jose';import type {IncomingMessage} from 'node:http';import type {Role} from '../domain.ts';import {DomainError} from '../domain.ts';
+export interface Principal{sub:string;role:Role}
+const secret=()=>new TextEncoder().encode(process.env.JWT_SECRET||'development-only-change-me-32-characters');
+export async function issueToken(principal:Principal,expires='1h'){return new SignJWT({role:principal.role}).setProtectedHeader({alg:'HS256'}).setSubject(principal.sub).setIssuer('earthplayground').setAudience('earthplayground-api').setIssuedAt().setExpirationTime(expires).sign(secret())}
+export async function authenticate(req:IncomingMessage):Promise<Principal>{const value=req.headers.authorization;if(!value?.startsWith('Bearer '))throw new DomainError('UNAUTHENTICATED','인증이 필요합니다.',401);try{const {payload}=await jwtVerify(value.slice(7),secret(),{issuer:'earthplayground',audience:'earthplayground-api'});return{sub:String(payload.sub),role:String(payload.role) as Role}}catch{throw new DomainError('INVALID_TOKEN','유효하지 않은 인증 토큰입니다.',401)}}
+export const requireRole=(principal:Principal,roles:Role[])=>{if(!roles.includes(principal.role))throw new DomainError('FORBIDDEN','권한이 없습니다.',403)};

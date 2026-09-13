@@ -1,0 +1,6 @@
+(function(){
+ const cards=[...document.querySelectorAll('.industry-card')],form=document.querySelector('#estimateForm'),result=document.querySelector('#estimateResult'),space=new URLSearchParams(location.search).get('space'),spaceIndustry={cafe:'카페',bakery:'베이커리',ramen:'레스토랑',salon:'미용실',retail:'리테일',office:'오피스'};let industry=spaceIndustry[space]||'카페';
+ cards.forEach(card=>card.addEventListener('click',()=>{cards.forEach(item=>{item.classList.remove('selected');item.setAttribute('aria-checked','false')});card.classList.add('selected');card.setAttribute('aria-checked','true');industry=card.dataset.industry}));
+ const preset=cards.find(card=>card.dataset.industry===industry);if(preset)preset.click();
+ form.addEventListener('submit',event=>{event.preventDefault();const data=new FormData(form),number='Q-'+new Date().toISOString().slice(2,10).replaceAll('-','')+'-'+String(Date.now()).slice(-4);localStorage.setItem('earthplayground-estimate',JSON.stringify({number,industry,sourceSpace:space||null,...Object.fromEntries(data),createdAt:new Date().toISOString()}));result.hidden=false;result.innerHTML=`<strong>견적 의뢰가 접수되었습니다.</strong><p>접수번호 ${number} · ${industry} · 담당자가 영업일 기준 1일 이내 연락드립니다.</p>`;result.scrollIntoView({behavior:'smooth',block:'center'})});
+})();

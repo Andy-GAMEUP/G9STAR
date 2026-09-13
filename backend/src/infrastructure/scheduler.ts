@@ -1,0 +1,6 @@
+import type {Database} from './database.ts';import {BusinessCalendar,isoDate} from './business-calendar.ts';
+export class SettlementScheduler{
+ constructor(privateDatabase:Database,privateCalendar:BusinessCalendar){this.database=privateDatabase;this.calendar=privateCalendar}private database:Database;private calendar:BusinessCalendar;
+ async run(now=new Date()){return this.database.withTransaction(async q=>{const finalized=await q(`update settlements set dispute_window='CLOSED',status=case when tax_status='VERIFIED' then 'FINAL' else 'HELD' end,hold_reason=case when tax_status='VERIFIED' then null else 'TAX_INVOICE' end where dispute_window='OPEN' and dispute_due_at<=$1 returning id`,[now.toISOString()]);const payable=await q(`update settlements s set status='PAID',paid_at=$1 from partners p where s.partner_id=p.id and s.status in ('FINAL','SPECIAL_PAY') and s.scheduled_pay_date<=$2 and s.tax_status='VERIFIED' and p.payout_hold=false returning s.id`,[now.toISOString(),isoDate(now)]);return{finalized:finalized.rows.map(x=>x.id),paid:payable.rows.map(x=>x.id)}})}
+ scheduleForPeriod(year:number,monthIndex:number){const pay=this.calendar.paymentDate(year,monthIndex+1);return{scheduledPayDate:isoDate(pay),taxInvoiceDueDate:isoDate(this.calendar.addBusinessDays(pay,-3))}}
+}

@@ -1,0 +1,6 @@
+import type {Database} from './database.ts';
+export type Publisher=(topic:string,payload:unknown)=>Promise<void>;
+export class OutboxPublisher{
+ constructor(privateDatabase:Database,privatePublish:Publisher,privateMaxAttempts=10){this.database=privateDatabase;this.publish=privatePublish;this.maxAttempts=privateMaxAttempts}private database:Database;private publish:Publisher;private maxAttempts:number;
+ async flush(limit=50){return this.database.withTransaction(async q=>{const batch=await q(`select * from outbox_events where published_at is null and attempts<$1 and (next_attempt_at is null or next_attempt_at<=now()) order by created_at for update skip locked limit $2`,[this.maxAttempts,limit]);const result={published:[] as string[],failed:[] as string[]};for(const event of batch.rows){try{await this.publish(event.topic,event.payload);await q(`update outbox_events set published_at=now(),attempts=attempts+1,last_error=null where id=$1`,[event.id]);result.published.push(event.id)}catch(error){await q(`update outbox_events set attempts=attempts+1,last_error=$2,next_attempt_at=now()+(interval '1 minute'*power(2,least(attempts,8))) where id=$1`,[event.id,String(error)]);result.failed.push(event.id)}}return result})}
+}
