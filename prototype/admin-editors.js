@@ -29,10 +29,13 @@
   qs('#peGenSkus').onclick=async()=>{if(!value.id){err.textContent='SKU는 상품 저장 후 생성할 수 있습니다.';return}state.options=collectOptions();qs('#peSkuResult').textContent='생성 중…';try{const r=await ctx.generateSkus(value.id);qs('#peSkuResult').innerHTML=`<strong>${r.count}개 SKU 생성</strong><ul>${r.items.map(s=>`<li>${esc(s.sku||s.id)}</li>`).join('')}</ul>`}catch(x){qs('#peSkuResult').textContent=x.message}};
   const build=intendedStatus=>{const name=qs('#peName').value.trim(),code=qs('#peCode').value.trim();if(!name)throw new Error('상품명을 입력하세요.');if(!code)throw new Error('상품코드를 입력하세요.');const regular=num(qs('#peRegular').value),sale=num(qs('#peSale').value);if(sale>regular)throw new Error('판매가는 정상가를 초과할 수 없습니다.');const payload={name,code,brand:qs('#peBrand').value.trim(),category:qs('#peCategory').value.trim(),regularPrice:regular,salePrice:sale,costPrice:num(qs('#peCost').value),options:collectOptions(),images:state.images.filter(Boolean)};if(!value.id)payload.status=intendedStatus;return payload};
   return new Promise(resolve=>{
-   const finish=(mode,ev)=>{try{const payload=build(mode==='draft'?'DRAFT':'ACTIVE');dialog._result={id:value.id,payload}}catch(x){ev.preventDefault();err.textContent=x.message}};
+   let settled=false;
+   const done=(result,rv)=>{if(settled)return;settled=true;resolve(result);try{dialog.returnValue=rv;dialog.close(rv)}catch(e){}};
+   const finish=(mode,ev)=>{ev.preventDefault();try{done({id:value.id,payload:build(mode==='draft'?'DRAFT':'ACTIVE')},mode==='draft'?'draft':'save')}catch(x){err.textContent=x.message}};
    qs('#peDraft').onclick=e=>finish('draft',e);qs('#peSave').onclick=e=>finish('save',e);
-   dialog._result=null;dialog.returnValue='cancel';dialog.showModal();
-   dialog.onclose=()=>resolve(dialog.returnValue==='cancel'?null:dialog._result);
+   qsa('#productEditor button[value="cancel"]').forEach(b=>b.onclick=e=>{e.preventDefault();done(null,'cancel')});
+   dialog.addEventListener('close',()=>done(null,'cancel'),{once:true});
+   dialog.showModal();
   });
  }
 
@@ -40,9 +43,16 @@
  function pickProduct(ctx){
   const dialog=qs('#productPicker'),input=qs('#ppSearch'),results=qs('#ppResults');
   input.value='';results.innerHTML='<div class="empty-state">검색어를 입력하세요.</div>';
-  let timer;const run=async()=>{const q=input.value.trim();results.innerHTML='<div class="empty-state">검색 중…</div>';try{const r=await ctx.search(q);results.innerHTML=(r.items||[]).map(p=>`<button type="button" class="pp-item" data-pid="${esc(p.id)}"><strong>${esc(p.name||p.id)}</strong><small>${esc(p.code||'')} · ${esc(p.id)}</small></button>`).join('')||'<div class="empty-state">결과가 없습니다.</div>';qsa('.pp-item').forEach(b=>b.onclick=()=>{dialog._pick={id:b.dataset.pid,name:b.querySelector('strong').textContent};dialog.returnValue='pick';dialog.close()})}catch(x){results.innerHTML=`<div class="empty-state">${esc(x.message)}</div>`}};
+  let timer;const run=async()=>{const q=input.value.trim();results.innerHTML='<div class="empty-state">검색 중…</div>';try{const r=await ctx.search(q);results.innerHTML=(r.items||[]).map(p=>`<button type="button" class="pp-item" data-pid="${esc(p.id)}"><strong>${esc(p.name||p.id)}</strong><small>${esc(p.code||'')} · ${esc(p.id)}</small></button>`).join('')||'<div class="empty-state">결과가 없습니다.</div>';qsa('.pp-item').forEach(b=>b.onclick=()=>dialog._done&&dialog._done({id:b.dataset.pid,name:b.querySelector('strong').textContent}))}catch(x){results.innerHTML=`<div class="empty-state">${esc(x.message)}</div>`}};
   input.oninput=()=>{clearTimeout(timer);timer=setTimeout(run,250)};
-  return new Promise(resolve=>{dialog._pick=null;dialog.returnValue='cancel';dialog.showModal();run();dialog.onclose=()=>resolve(dialog.returnValue==='pick'?dialog._pick:null)});
+  return new Promise(resolve=>{
+   let settled=false;
+   const done=pick=>{if(settled)return;settled=true;resolve(pick);try{dialog.close(pick?'pick':'cancel')}catch(e){}};
+   dialog._done=done;
+   qsa('#productPicker button[value="cancel"]').forEach(b=>b.onclick=e=>{e.preventDefault();done(null)});
+   dialog.addEventListener('close',()=>done(null),{once:true});
+   dialog.showModal();run();
+  });
  }
 
  // ---------- A-08 Hotspot Editor ----------
@@ -64,9 +74,12 @@
   qs('#hePreview').onclick=()=>{canvas.classList.toggle('preview');qs('#hePreview').textContent=canvas.classList.contains('preview')?'편집':'Preview'};
   const build=()=>{const title=qs('#heTitleInput').value.trim();if(!title)throw new Error('쇼케이스명을 입력하세요.');const partnerId=qs('#hePartner').value;if(!partnerId)throw new Error('Partner를 선택하세요.');return{id:value.id,showcase:{title,partnerId,imageUrl:state.imageUrl},hotspots:state.hotspots.map(h=>({id:h.id,productId:h.productId,x:h.x,y:h.y}))}};
   return new Promise(resolve=>{
-   qs('#heSave').onclick=e=>{try{dialog._result=build()}catch(x){e.preventDefault();err.textContent=x.message}};
-   dialog._result=null;dialog.returnValue='cancel';dialog.showModal();
-   dialog.onclose=()=>{canvas.classList.remove('preview');qs('#hePreview').textContent='Preview';resolve(dialog.returnValue==='cancel'?null:dialog._result)};
+   let settled=false;
+   const done=(result,rv)=>{if(settled)return;settled=true;canvas.classList.remove('preview');qs('#hePreview').textContent='Preview';resolve(result);try{dialog.returnValue=rv;dialog.close(rv)}catch(e){}};
+   qs('#heSave').onclick=e=>{e.preventDefault();try{done(build(),'save')}catch(x){err.textContent=x.message}};
+   qsa('#hotspotEditor button[value="cancel"]').forEach(b=>b.onclick=e=>{e.preventDefault();done(null,'cancel')});
+   dialog.addEventListener('close',()=>done(null,'cancel'),{once:true});
+   dialog.showModal();
   });
  }
 
