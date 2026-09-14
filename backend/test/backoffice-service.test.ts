@@ -17,6 +17,15 @@ test('상품 등록·SKU 조합 생성·상태 전이를 관리한다',()=>{cons
 
 test('상품 등록·수정 시 코드 중복·역가격을 차단하고 수정 재검증한다',()=>{const {ops}=setup();assert.throws(()=>ops.create('products',{code:'CH-102',name:'중복',regularPrice:1000,salePrice:900},'md01'),(e:any)=>e.code==='PRODUCT_CODE_DUPLICATED');assert.throws(()=>ops.create('products',{code:'NEW-1',name:'역가격',regularPrice:1000,salePrice:2000},'md01'),(e:any)=>e.code==='INVALID_PRICE');const product=ops.create('products',{code:'ok-1',name:'정상',regularPrice:1000,salePrice:900},'md01');assert.equal(product.code,'OK-1');assert.ok(Array.isArray(product.images));assert.throws(()=>ops.update('products',product.id,{salePrice:5000},'md01'),(e:any)=>e.code==='INVALID_PRICE');assert.throws(()=>ops.update('products',product.id,{code:'CH-102'},'md01'),(e:any)=>e.code==='PRODUCT_CODE_DUPLICATED');assert.equal(ops.update('products',product.id,{salePrice:800,images:['/uploads/a.png']},'md01').salePrice,800)});
 
+test('상품 카테고리는 표준값만 허용하고 목록을 카테고리로 필터한다',()=>{const {ops}=setup();
+ assert.throws(()=>ops.create('products',{code:'CAT-BAD',name:'자유입력',regularPrice:1000,salePrice:900,category:'의자'},'md01'),(e:any)=>e.code==='INVALID_CATEGORY');
+ const p=ops.create('products',{code:'LMP-1',name:'플로어 램프',regularPrice:1000,salePrice:900,category:'조명'},'md01');
+ assert.equal(p.category,'조명');
+ assert.equal(ops.list('products',{category:'조명'}).items.length,1);
+ assert.equal(ops.list('products',{category:'조명'}).items[0].code,'LMP-1');
+ assert.ok(ops.list('products',{category:'우드 체어'}).items.some(x=>x.code==='CH-102'));
+ assert.throws(()=>ops.update('products',p.id,{category:'없는분류'},'md01'),(e:any)=>e.code==='INVALID_CATEGORY')});
+
 test('쇼케이스 등록 검증과 공개 전 이미지 필수를 강제한다',()=>{const {ops}=setup();assert.throws(()=>ops.create('showcases',{partnerId:'P-A'},'md01'),(e:any)=>e.code==='VALIDATION_ERROR');assert.throws(()=>ops.create('showcases',{title:'미소속',partnerId:'P-XXX'},'md01'),(e:any)=>e.code==='RESOURCE_NOT_FOUND');const draft=ops.create('showcases',{title:'신규 쇼케이스',partnerId:'P-A'},'md01');assert.equal(draft.status,'DRAFT');assert.ok(Array.isArray(draft.hotspots));assert.throws(()=>ops.transition('showcases',draft.id,'PUBLISHED','md01'),(e:any)=>e.code==='SHOWCASE_IMAGE_REQUIRED');ops.update('showcases',draft.id,{imageUrl:'/uploads/cafe.png'},'md01');assert.equal(ops.transition('showcases',draft.id,'PUBLISHED','md01').status,'PUBLISHED')});
 
 test('스토어프론트 공개 API는 공개 항목만·민감필드 제외로 노출한다',()=>{const {ops}=setup();

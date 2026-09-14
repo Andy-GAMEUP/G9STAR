@@ -37,7 +37,7 @@ export async function handleBackofficeRoute(req:IncomingMessage,url:URL,method:s
  if(path.length&&isModule(path[0])){
   const module=path[0];
   const partnerId=principal.role==='PARTNER'&&module!=='partners'?principal.sub:url.searchParams.get('partnerId')||undefined;
-  const listQuery={q:url.searchParams.get('q')||undefined,status:url.searchParams.get('status')||undefined,partnerId,page:Number(url.searchParams.get('page')||1),pageSize:Number(url.searchParams.get('pageSize')||20),sort:url.searchParams.get('sort')||undefined,direction:url.searchParams.get('direction')==='asc'?'asc' as const:'desc' as const};
+  const listQuery={q:url.searchParams.get('q')||undefined,status:url.searchParams.get('status')||undefined,partnerId,category:url.searchParams.get('category')||undefined,page:Number(url.searchParams.get('page')||1),pageSize:Number(url.searchParams.get('pageSize')||20),sort:url.searchParams.get('sort')||undefined,direction:url.searchParams.get('direction')==='asc'?'asc' as const:'desc' as const};
   if(method==='GET'&&path[1]==='export'){ops.authorize(principal.role,module,'read');if(principal.role==='PARTNER'&&module==='partners')throw new DomainError('FORBIDDEN','파트너 마스터 내보내기 권한이 없습니다.',403);return ok(ops.exportRows(module,listQuery))}
   if(method==='POST'&&path[1]==='bulk-status'){ops.authorize(principal.role,module,'write');return ok(ops.bulkTransition(module,input.ids,input.status,principal.sub))}
   if(method==='GET'&&path.length===1){ops.authorize(principal.role,module,'read');if(principal.role==='PARTNER'&&module==='partners')return ok({items:[ops.assertPartnerScope(module,principal.sub,principal.sub)],page:1,pageSize:1,total:1,totalPages:1});return ok(ops.list(module,listQuery))}
