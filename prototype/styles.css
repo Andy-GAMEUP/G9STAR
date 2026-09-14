@@ -190,3 +190,16 @@
 .cta-desc{color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 20px}
 .buy-actions-2{grid-template-columns:repeat(2,1fr)}
 @media(max-width:800px){.rental-thumb{height:210px}}
+
+/* ---- rental card links + detail (front-20260915c) ---- */
+.rental-grid>a.rental-card{display:block}
+.rental-card .rental-thumb{border-radius:10px 10px 0 0}
+.rental-detail-main{height:auto;min-height:520px;border-radius:20px}
+.rental-detail-main:after{border-radius:20px}
+.product-buy .rental-daily{margin:48px 0 6px;display:flex;align-items:baseline;gap:8px}
+.rental-daily strong{font-size:31px;font-weight:900}
+.rental-daily span{color:var(--muted);font-size:13px}
+.rd-spec{color:var(--muted);margin:0 0 4px;line-height:1.6}
+.rd-guide{margin-top:18px;color:var(--muted);font-size:13px;line-height:1.7}
+.cat-tree a.current{background:#eef1e9;color:#40523b;font-weight:800}
+@media(max-width:800px){.rental-detail-main{min-height:340px}}

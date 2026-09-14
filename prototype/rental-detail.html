@@ -1,0 +1,102 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>렌탈 상품 상세 | 지구별놀이터</title><link rel="stylesheet" href="styles.css?v=front-20260915c"></head><body class="storefront">
+<div class="partner-bar"><strong>EARTH PLAYGROUND</strong><span>제휴사 메뉴</span><span>프로모션</span><span>고객센터</span><nav aria-label="사용자 메뉴"><a href="#">검색</a><a href="#">찜</a><a href="checkout.html">장바구니</a><a href="coupons.html">내 쿠폰</a><a href="signup.html">로그인</a></nav></div>
+<header class="site-header"><a class="brand" href="index.html"><span class="brand-mark">●</span> 지구별놀이터</a><button class="menu" aria-expanded="false" aria-controls="nav">메뉴</button><nav id="nav" aria-label="주요 메뉴"><a href="index.html#about">서비스소개</a><a href="index.html#showcase">매장쇼케이스</a><a href="product.html?id=PRD-101">제품</a><a href="rental.html">렌탈서비스</a><a href="estimate.html">견적의뢰</a></nav><a class="header-cta" href="estimate.html">렌탈 문의하기</a></header>
+<main class="page-shell">
+  <p class="breadcrumbs" id="rdBreadcrumbs">홈 › 렌탈서비스</p>
+  <div class="product-layout">
+    <aside class="category-nav" aria-label="렌탈 카테고리">
+      <h2>렌탈 카테고리</h2>
+      <ul class="cat-tree" id="rdCatTree"></ul>
+    </aside>
+    <div class="product-main-col">
+      <div class="detail-grid">
+        <section class="product-gallery">
+          <div class="rental-detail-main rental-thumb" id="rdMain" aria-label="렌탈 상품 이미지"></div>
+          <div class="product-thumbs"><button class="active" aria-label="첫 번째 이미지"></button><button aria-label="두 번째 이미지"></button><button aria-label="세 번째 이미지"></button></div>
+        </section>
+        <section class="product-buy">
+          <p class="eyebrow">OUTDOOR &amp; EVENT RENTAL</p>
+          <h1 id="rdName">렌탈 상품</h1>
+          <p class="sku" id="rdSku">RENTAL</p>
+          <p class="rental-daily"><strong id="rdPrice">일 0원</strong> <span>부터 · VAT 별도</span></p>
+          <p class="rd-spec" id="rdSpec"></p>
+          <div class="option-list">
+            <label>대여 기간<select id="rdTerm"><option value="1일">1일</option><option value="2~3일">2~3일</option><option value="1주">1주</option><option value="협의">기간 협의</option></select></label>
+            <label>대여 희망일<input id="rdDate" type="date"></label>
+            <label>수량<span class="quantity"><button type="button" data-qty="minus">−</button><strong id="rdQty">1</strong><button type="button" data-qty="plus">+</button></span></label>
+          </div>
+          <p class="stock" id="rdStock">대여 가능 · 배송/설치 별도 안내(수도권)</p>
+          <div class="buy-actions buy-actions-2">
+            <button class="compact-button" id="rdCartBtn" data-toast="렌탈 견적함에 담았습니다.">견적 담기</button>
+            <button class="compact-button dark" id="rdInquiryBtn">렌탈 문의</button>
+          </div>
+        </section>
+      </div>
+      <nav class="detail-tabs" aria-label="상품 상세 정보"><a href="#info">렌탈안내</a><a href="#info">규격</a><a href="#info">배송·설치</a><a href="#info">유의사항</a></nav>
+      <section class="detail-content" id="info">
+        <p class="eyebrow">RENTAL DETAILS</p>
+        <h2 id="rdDetailTitle">행사 현장을 완성하는 렌탈 구성</h2>
+        <ul id="rdDetailList"></ul>
+        <p class="rd-guide">※ 대여료는 1일 기준이며, 대여 기간·수량·지역에 따라 견적으로 최종 안내됩니다. 설치·철거 대행 및 지방 배송은 별도 문의 바랍니다.</p>
+      </section>
+      <section class="section" style="padding-left:0;padding-right:0">
+        <div class="section-head"><div><h2>같은 카테고리 렌탈 상품</h2></div><a href="rental.html" id="rdMoreLink">전체 보기 →</a></div>
+        <div class="figma-product-grid rental-grid" id="rdRelated"></div>
+      </section>
+    </div>
+  </div>
+</main>
+<div class="toast" role="status"></div>
+<div class="mobile-cta"><a href="product.html?id=PRD-101">제품</a><a href="rental.html">렌탈</a><a href="estimate.html">견적 의뢰</a></div>
+<script src="rental-data.js?v=front-20260915c"></script>
+<script>
+(function(){
+  var R=window.RENTAL;
+  var params=new URLSearchParams(location.search);
+  var id=params.get('id');
+  var p=id&&R.byId(id);
+  if(!p){p=R.all()[0];}
+  var qs=function(s){return document.querySelector(s);};
+
+  // 카테고리 사이드바
+  qs('#rdCatTree').innerHTML=R.categories.map(function(c){
+    return '<li><a href="rental.html#'+encodeURIComponent(c)+'"'+(c===p.cat?' class="current"':'')+'>'+c+'</a></li>';
+  }).join('');
+
+  // 본문 채우기
+  document.title=p.name+' | 지구별놀이터';
+  qs('#rdBreadcrumbs').textContent='홈 › 렌탈서비스 › '+p.cat;
+  qs('#rdName').textContent=p.name;
+  qs('#rdSku').textContent=p.id+' · '+p.tag;
+  qs('#rdPrice').textContent='일 '+R.price(p.price);
+  qs('#rdSpec').textContent=p.spec;
+  qs('#rdMain').classList.add(p.thumb);
+  qs('#rdDetailList').innerHTML=p.detail.map(function(t){return '<li>'+t+'</li>';}).join('');
+  qs('#rdMoreLink').href='rental.html#'+encodeURIComponent(p.cat);
+
+  // 수량
+  var qty=1;var qtyEl=qs('#rdQty');
+  document.querySelectorAll('[data-qty]').forEach(function(b){b.addEventListener('click',function(){
+    qty=Math.max(1,qty+(b.getAttribute('data-qty')==='plus'?1:-1));qtyEl.textContent=qty;
+  });});
+
+  // 렌탈 문의 → 견적 페이지로 상품 정보 전달
+  qs('#rdInquiryBtn').addEventListener('click',function(){
+    location.href='estimate.html?rental='+encodeURIComponent(p.id)+'&name='+encodeURIComponent(p.name);
+  });
+
+  // 관련 상품(같은 카테고리, 자기 제외 → 부족하면 다른 카테고리로 채움)
+  var rel=R.byCat(p.cat).filter(function(x){return x.id!==p.id;});
+  if(rel.length<3){R.all().forEach(function(x){if(x.id!==p.id&&rel.indexOf(x)<0&&rel.length<3)rel.push(x);});}
+  qs('#rdRelated').innerHTML=rel.slice(0,3).map(function(x){
+    return '<a class="rental-card" href="rental-detail.html?id='+x.id+'">'
+      +'<div class="rental-thumb '+x.thumb+'"></div>'
+      +'<p class="meta">'+x.tag+' · '+x.cat+'</p>'
+      +'<h3>'+x.name+'</h3>'
+      +'<p class="spec">'+x.spec+'</p>'
+      +'<p class="price">일 '+R.price(x.price)+' <small>~</small></p></a>';
+  }).join('');
+})();
+</script>
+<script src="app.js?v=store-20260914"></script>
+</body></html>
