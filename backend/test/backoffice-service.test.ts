@@ -5,7 +5,27 @@ import {BackofficeService} from '../src/backoffice-service.ts';
 
 const setup=()=>{const platform=new PlatformService();return{platform,ops:new BackofficeService(platform)}};
 
-test('전체 관리자 모듈과 통합 대시보드를 제공한다',()=>{const {ops}=setup();assert.equal(ops.modules().length,16);const dashboard=ops.dashboard();assert.equal(dashboard.kpis.orders,1);assert.equal(dashboard.newEstimates.length,1);assert.ok(dashboard.partnerTop.length>=2)});
+test('전체 관리자 모듈과 통합 대시보드를 제공한다',()=>{const {ops}=setup();assert.equal(ops.modules().length,17);const dashboard=ops.dashboard();assert.equal(dashboard.kpis.orders,1);assert.equal(dashboard.newEstimates.length,1);assert.ok(dashboard.partnerTop.length>=2)});
+
+test('렌탈 카탈로그(rentalItems)를 등록·검증하고 스토어프론트로 노출한다',()=>{const {ops}=setup();
+ // 시드 22종이 ACTIVE 로 노출된다
+ const store=ops.storefrontRentalItems();assert.equal(store.items.length,22);assert.equal(store.categories.length,8);
+ // 표준 렌탈 카테고리만 허용
+ assert.throws(()=>ops.create('rentalItems',{name:'잘못된 카테고리',code:'R-X-1',category:'우드 체어',dailyPrice:1000},'md01'),(error:any)=>error.code==='INVALID_CATEGORY');
+ // 대여가 필수(0/음수 거부)
+ assert.throws(()=>ops.create('rentalItems',{name:'가격없음',code:'R-X-2',category:'부스',dailyPrice:-1},'md01'),(error:any)=>error.code==='VALIDATION_ERROR');
+ // 정상 등록 → DRAFT(스토어프론트 미노출)
+ const created=ops.create('rentalItems',{name:'신규 천막',code:'R-NEW-1',category:'야외천막',dailyPrice:50000,spec:'테스트'},'md01');assert.equal(created.status,'DRAFT');
+ assert.equal(ops.storefrontRentalItems().items.length,22);
+ // 코드 중복 거부
+ assert.throws(()=>ops.create('rentalItems',{name:'중복',code:'R-NEW-1',category:'부스',dailyPrice:1000},'md01'),(error:any)=>error.code==='RENTAL_CODE_DUPLICATED');
+ // ACTIVE 전환 → 스토어프론트 노출(23종)
+ ops.transition('rentalItems',created.id,'ACTIVE','md01');assert.equal(ops.storefrontRentalItems().items.length,23);
+ // 상세 + 같은 카테고리 related
+ const detail=ops.storefrontRentalItem('R-BOOTH-01');assert.equal(detail.category,'부스');assert.ok(detail.related.every((r:any)=>r.category==='부스'));
+ // 스토어프론트는 민감필드(costPrice 등) 없이 dailyPrice 만 노출
+ assert.equal(typeof detail.dailyPrice,'number');
+});
 
 test('추천코드 변경 이력과 소급 승인 권한을 보존한다',()=>{const {ops}=setup();const referral=ops.create('referrals',{code:'RS-A001-PARK',partnerId:'P-A',ownerId:'PARK',commissionRule:{rate:.08}},'md01');assert.equal(referral.status,'ACTIVE');assert.throws(()=>ops.update('referrals',referral.id,{commissionRule:{rate:.09},effectiveFrom:'2026-10-01',reason:'정책 변경',retroactive:true},'md01','MD'),(error:any)=>error.code==='FORBIDDEN');const updated=ops.update('referrals',referral.id,{commissionRule:{rate:.09},effectiveFrom:'2026-10-01',reason:'정책 변경',retroactive:false},'md01','MD');assert.equal((updated.history as unknown[]).length,1)});
 

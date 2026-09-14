@@ -83,5 +83,31 @@
   });
  }
 
- window.EarthEditors={product,hotspot};
+ // ---------- Rental Item Editor (야외·행사 렌탈 카탈로그) ----------
+ const RENTAL_CATS=['야외천막','부스','천막매대','테이블','의자','파라솔','포토월','단상'];
+ function rentalItem(value,ctx){
+  const dialog=qs('#rentalEditor'),err=qs('#riError');
+  const state={images:Array.isArray(value.images)?[...value.images]:[],status:value.status||'DRAFT'};
+  qs('#riTitle').textContent=value.id?`렌탈 상품 수정 · ${value.id}`:'렌탈 상품 등록';
+  qs('#riCategory').innerHTML='<option value="">선택</option>'+RENTAL_CATS.map(c=>`<option>${esc(c)}</option>`).join('');
+  qs('#riName').value=value.name||'';qs('#riCode').value=value.code||'';qs('#riCategory').value=value.category||'';qs('#riPrice').value=value.dailyPrice??'';qs('#riSpec').value=value.spec||'';
+  qs('#riStatus').textContent=state.status;err.textContent='';
+  const renderMain=()=>{const el=qs('#riMainPreview'),u=state.images[0];if(u){el.classList.remove('empty');el.innerHTML=`<img alt="대표 이미지" src="${esc(srcOf(ctx,u))}">`}else{el.classList.add('empty');el.textContent='이미지 없음'}};
+  const renderDetail=()=>{qs('#riDetailPreview').innerHTML=state.images.slice(1).map((u,i)=>`<span class="thumb"><img alt="상세 ${i+1}" src="${esc(srcOf(ctx,u))}"><button type="button" data-ridetail="${i+1}" aria-label="삭제">×</button></span>`).join('')||'<small class="hint">상세 이미지 없음</small>';qsa('#riDetailPreview [data-ridetail]').forEach(b=>b.onclick=()=>{state.images.splice(Number(b.dataset.ridetail),1);renderDetail()})};
+  renderMain();renderDetail();
+  qs('#riMainFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;err.textContent='업로드 중…';try{const r=await ctx.upload(f);state.images[0]=r.url;renderMain();err.textContent=''}catch(x){err.textContent=x.message}e.target.value=''};
+  qs('#riDetailFiles').onchange=async e=>{const files=[...e.target.files];if(!files.length)return;err.textContent='업로드 중…';try{for(const f of files){const r=await ctx.upload(f);if(!state.images.length)state.images.push('');state.images.push(r.url)}renderMain();renderDetail();err.textContent=''}catch(x){err.textContent=x.message}e.target.value=''};
+  const build=intendedStatus=>{const name=qs('#riName').value.trim(),code=qs('#riCode').value.trim(),category=qs('#riCategory').value,dailyPrice=num(qs('#riPrice').value);if(!name)throw new Error('상품명을 입력하세요.');if(!code)throw new Error('상품코드를 입력하세요.');if(!category)throw new Error('렌탈 카테고리를 선택하세요.');if(dailyPrice<=0)throw new Error('1일 대여가를 입력하세요.');const payload={name,code,category,dailyPrice,spec:qs('#riSpec').value.trim(),images:state.images.filter(Boolean)};if(!value.id)payload.status=intendedStatus;return payload};
+  return new Promise(resolve=>{
+   let settled=false;
+   const done=(result,rv)=>{if(settled)return;settled=true;try{dialog.returnValue=rv;dialog.close(rv)}catch(e){}if(dialog.open){try{dialog.open=false}catch(e){}}resolve(result)};
+   const finish=(mode,ev)=>{ev.preventDefault();try{done({id:value.id,payload:build(mode==='draft'?'DRAFT':'ACTIVE')},mode==='draft'?'draft':'save')}catch(x){err.textContent=x.message}};
+   qs('#riDraft').onclick=e=>finish('draft',e);qs('#riSave').onclick=e=>finish('save',e);
+   qsa('#rentalEditor button[value="cancel"]').forEach(b=>b.onclick=e=>{e.preventDefault();done(null,'cancel')});
+   dialog.addEventListener('close',()=>done(null,'cancel'),{once:true});
+   dialog.showModal();
+  });
+ }
+
+ window.EarthEditors={product,hotspot,rentalItem};
 })();

@@ -1,4 +1,4 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>렌탈 상품 상세 | 지구별놀이터</title><link rel="stylesheet" href="styles.css?v=front-20260915c"></head><body class="storefront">
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>렌탈 상품 상세 | 지구별놀이터</title><link rel="stylesheet" href="styles.css?v=front-20260915e"></head><body class="storefront">
 <div class="partner-bar"><strong>EARTH PLAYGROUND</strong><span>제휴사 메뉴</span><span>프로모션</span><span>고객센터</span><nav aria-label="사용자 메뉴"><a href="#">검색</a><a href="#">찜</a><a href="checkout.html">장바구니</a><a href="coupons.html">내 쿠폰</a><a href="signup.html">로그인</a></nav></div>
 <header class="site-header"><a class="brand" href="index.html"><span class="brand-mark">●</span> 지구별놀이터</a><button class="menu" aria-expanded="false" aria-controls="nav">메뉴</button><nav id="nav" aria-label="주요 메뉴"><a href="index.html#about">서비스소개</a><a href="index.html#showcase">매장쇼케이스</a><a href="product.html?id=PRD-101">제품</a><a href="rental.html">렌탈서비스</a><a href="estimate.html">견적의뢰</a></nav><a class="header-cta" href="estimate.html">렌탈 문의하기</a></header>
 <main class="page-shell">
@@ -41,21 +41,21 @@
       </section>
       <section class="section" style="padding-left:0;padding-right:0">
         <div class="section-head"><div><h2>같은 카테고리 렌탈 상품</h2></div><a href="rental.html" id="rdMoreLink">전체 보기 →</a></div>
-        <div class="figma-product-grid rental-grid" id="rdRelated"></div>
+        <div class="rental-grid" id="rdRelated"></div>
       </section>
     </div>
   </div>
 </main>
 <div class="toast" role="status"></div>
 <div class="mobile-cta"><a href="product.html?id=PRD-101">제품</a><a href="rental.html">렌탈</a><a href="estimate.html">견적 의뢰</a></div>
-<script src="rental-data.js?v=front-20260915c"></script>
+<script src="rental-data.js?v=front-20260915d"></script>
 <script>
-(function(){
+(async function(){
   var R=window.RENTAL;
   var params=new URLSearchParams(location.search);
   var id=params.get('id');
-  var p=id&&R.byId(id);
-  if(!p){p=R.all()[0];}
+  var p=id?await R.loadOne(id):null; // 백엔드 상세 우선
+  if(!p){await R.load();p=(id&&R.byId(id))||R.all()[0];} // 폴백: 로컬 시드
   var qs=function(s){return document.querySelector(s);};
 
   // 카테고리 사이드바
@@ -85,9 +85,9 @@
     location.href='estimate.html?rental='+encodeURIComponent(p.id)+'&name='+encodeURIComponent(p.name);
   });
 
-  // 관련 상품(같은 카테고리, 자기 제외 → 부족하면 다른 카테고리로 채움)
-  var rel=R.byCat(p.cat).filter(function(x){return x.id!==p.id;});
-  if(rel.length<3){R.all().forEach(function(x){if(x.id!==p.id&&rel.indexOf(x)<0&&rel.length<3)rel.push(x);});}
+  // 관련 상품: 백엔드 related 우선 → 없으면 같은 카테고리(자기 제외) → 부족하면 타 카테고리로 채움
+  var rel=(p.related&&p.related.length)?p.related.slice():R.byCat(p.cat).filter(function(x){return x.id!==p.id;});
+  if(rel.length<3){R.all().forEach(function(x){if(x.id!==p.id&&!rel.some(function(y){return y.id===x.id;})&&rel.length<3)rel.push(x);});}
   qs('#rdRelated').innerHTML=rel.slice(0,3).map(function(x){
     return '<a class="rental-card" href="rental-detail.html?id='+x.id+'">'
       +'<div class="rental-thumb '+x.thumb+'"></div>'

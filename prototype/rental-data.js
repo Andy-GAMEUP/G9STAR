@@ -46,18 +46,26 @@
     '단상':['개회식·시상식·발표용 원목 연단','이동식 무대 단상은 높이 조절 및 조립 가능','규모에 맞춰 스테이지 확장 구성 가능']
   };
 
+  // API 아이템(백엔드 rentalItems)을 내부 표준 형태로 변환
+  function fromApi(it){var cat=it.category,m=CAT_META[cat]||{tag:'RENTAL',thumb:'t-table'};return {id:it.id,cat:cat,name:it.name,spec:it.spec||'',price:Number(it.dailyPrice||0),tag:m.tag,thumb:m.thumb,detail:DETAIL[cat]||[]};}
+
   var PRODUCTS=RAW.map(function(r){
     var cat=r[1], m=CAT_META[cat]||{tag:'RENTAL',thumb:'t-table'};
     return {id:r[0],cat:cat,name:r[2],spec:r[3],price:r[4],tag:m.tag,thumb:m.thumb,detail:DETAIL[cat]||[]};
   });
 
+  var BASE=(localStorage.getItem('earthplayground-api')||'http://127.0.0.1:4100').replace(/\/$/,'');
   var API={
     categories:['야외천막','부스','천막매대','테이블','의자','파라솔','포토월','단상'],
     all:function(){return PRODUCTS.slice();},
     byId:function(id){return PRODUCTS.filter(function(p){return p.id===id;})[0]||null;},
     byCat:function(cat){return PRODUCTS.filter(function(p){return p.cat===cat;});},
     price:function(n){return n.toLocaleString('ko-KR')+'원';},
-    catMeta:function(cat){return CAT_META[cat];}
+    catMeta:function(cat){return CAT_META[cat];},
+    fromApi:fromApi,
+    // 백엔드 카탈로그를 우선 로드(실패 시 로컬 시드 유지)
+    load:async function(){try{var r=await fetch(BASE+'/v1/rental-items');if(!r.ok)throw 0;var d=await r.json();if(d&&Array.isArray(d.items)&&d.items.length){PRODUCTS=d.items.map(fromApi);}}catch(e){}return PRODUCTS.slice();},
+    loadOne:async function(id){try{var r=await fetch(BASE+'/v1/rental-items/'+encodeURIComponent(id));if(!r.ok)throw 0;var d=await r.json();var p=fromApi(d);p.related=(d.related||[]).map(fromApi);return p;}catch(e){return null;}}
   };
   window.RENTAL=API;
 })();

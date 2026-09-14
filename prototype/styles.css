@@ -203,3 +203,14 @@
 .rd-guide{margin-top:18px;color:var(--muted);font-size:13px;line-height:1.7}
 .cat-tree a.current{background:#eef1e9;color:#40523b;font-weight:800}
 @media(max-width:800px){.rental-detail-main{min-height:340px}}
+
+/* ---- rental catalog editor (admin-20260915d) ---- */
+#rentalEditor .ri-spec-label{display:block;margin:14px 0 0;font-size:12px;font-weight:800}
+#rentalEditor .ri-spec-label input{display:block;width:100%;margin-top:8px;border:1px solid var(--admin-line,#d9dedb);border-radius:8px;padding:11px}
+
+/* ---- rental-grid standalone (front-20260915d) — app.js .figma-product-grid 주입 회피 ---- */
+.rental-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px}
+.rental-grid>.rental-card{display:block;overflow:hidden;background:white;border-radius:10px;padding:0 0 18px;transition:transform .2s,box-shadow .2s}
+.rental-grid>.rental-card:hover{transform:translateY(-4px);box-shadow:0 18px 36px rgba(36,35,31,.1)}
+@media(max-width:900px){.rental-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.rental-grid{grid-template-columns:1fr}}
