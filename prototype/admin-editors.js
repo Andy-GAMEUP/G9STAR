@@ -30,7 +30,7 @@
   const build=intendedStatus=>{const name=qs('#peName').value.trim(),code=qs('#peCode').value.trim();if(!name)throw new Error('상품명을 입력하세요.');if(!code)throw new Error('상품코드를 입력하세요.');const regular=num(qs('#peRegular').value),sale=num(qs('#peSale').value);if(sale>regular)throw new Error('판매가는 정상가를 초과할 수 없습니다.');const payload={name,code,brand:qs('#peBrand').value.trim(),category:qs('#peCategory').value.trim(),regularPrice:regular,salePrice:sale,costPrice:num(qs('#peCost').value),options:collectOptions(),images:state.images.filter(Boolean)};if(!value.id)payload.status=intendedStatus;return payload};
   return new Promise(resolve=>{
    let settled=false;
-   const done=(result,rv)=>{if(settled)return;settled=true;resolve(result);try{dialog.returnValue=rv;dialog.close(rv)}catch(e){}};
+   const done=(result,rv)=>{if(settled)return;settled=true;try{dialog.returnValue=rv;dialog.close(rv)}catch(e){}if(dialog.open){try{dialog.open=false}catch(e){}}resolve(result)};
    const finish=(mode,ev)=>{ev.preventDefault();try{done({id:value.id,payload:build(mode==='draft'?'DRAFT':'ACTIVE')},mode==='draft'?'draft':'save')}catch(x){err.textContent=x.message}};
    qs('#peDraft').onclick=e=>finish('draft',e);qs('#peSave').onclick=e=>finish('save',e);
    qsa('#productEditor button[value="cancel"]').forEach(b=>b.onclick=e=>{e.preventDefault();done(null,'cancel')});
@@ -47,7 +47,7 @@
   input.oninput=()=>{clearTimeout(timer);timer=setTimeout(run,250)};
   return new Promise(resolve=>{
    let settled=false;
-   const done=pick=>{if(settled)return;settled=true;resolve(pick);try{dialog.close(pick?'pick':'cancel')}catch(e){}};
+   const done=pick=>{if(settled)return;settled=true;try{dialog.close(pick?'pick':'cancel')}catch(e){}if(dialog.open){try{dialog.open=false}catch(e){}}resolve(pick)};
    dialog._done=done;
    qsa('#productPicker button[value="cancel"]').forEach(b=>b.onclick=e=>{e.preventDefault();done(null)});
    dialog.addEventListener('close',()=>done(null),{once:true});
@@ -75,7 +75,7 @@
   const build=()=>{const title=qs('#heTitleInput').value.trim();if(!title)throw new Error('쇼케이스명을 입력하세요.');const partnerId=qs('#hePartner').value;if(!partnerId)throw new Error('Partner를 선택하세요.');return{id:value.id,showcase:{title,partnerId,imageUrl:state.imageUrl},hotspots:state.hotspots.map(h=>({id:h.id,productId:h.productId,x:h.x,y:h.y}))}};
   return new Promise(resolve=>{
    let settled=false;
-   const done=(result,rv)=>{if(settled)return;settled=true;canvas.classList.remove('preview');qs('#hePreview').textContent='Preview';resolve(result);try{dialog.returnValue=rv;dialog.close(rv)}catch(e){}};
+   const done=(result,rv)=>{if(settled)return;settled=true;canvas.classList.remove('preview');qs('#hePreview').textContent='Preview';try{dialog.returnValue=rv;dialog.close(rv)}catch(e){}if(dialog.open){try{dialog.open=false}catch(e){}}resolve(result)};
    qs('#heSave').onclick=e=>{e.preventDefault();try{done(build(),'save')}catch(x){err.textContent=x.message}};
    qsa('#hotspotEditor button[value="cancel"]').forEach(b=>b.onclick=e=>{e.preventDefault();done(null,'cancel')});
    dialog.addEventListener('close',()=>done(null,'cancel'),{once:true});
