@@ -38,7 +38,7 @@ function renderShowcaseFromConfig(){
  document.querySelectorAll('.scene-hotspot').forEach((point,index)=>{const product=config.products[index];point.dataset.name=product[0];point.dataset.price=product[1]});
  [...document.querySelectorAll('.product-grid>a,.product-grid>article')].forEach((card,index)=>{const product=config.products[index];if(!product)return;card.querySelector('h3').textContent=product[0];card.querySelector('.price').textContent=product[1].split(' · ')[0]});
  selection.querySelector('strong').textContent=config.products[0][0];selection.querySelector('small').textContent=config.products[0][1];document.querySelector('#spaceEstimateLink').href=`estimate.html?space=${key}`;
- bindFavorite(key,config.title,config.image);bindShowcaseInteractions();
+ bindFavorite(key,config.title,config.image);bindShowcaseInteractions();initShowcaseExtras(key,config.title);renderSimilar(null);
 }
 
 async function renderShowcaseFromApi(id){
@@ -57,7 +57,7 @@ async function renderShowcaseFromApi(id){
   if(grid)grid.innerHTML=s.hotspots.map(h=>{const p=h.product,price=p.salePrice!=null?wonText(p.salePrice):'견적 상품',bg=p.images&&p.images[0]?`style="background-image:url('${imgSrc(p.images[0])}');background-size:cover;background-position:center"`:'';return `<a href="product.html?id=${encodeURIComponent(p.id)}"><div class="product-image" ${bg}></div><p class="meta">${escapeHtml(p.category||'PRODUCT')}</p><h3>${escapeHtml(p.name)}</h3><p class="price">${escapeHtml(price)}</p></a>`}).join('')||'<p class="empty-state">연결된 상품이 없습니다.</p>';
   const budget=document.querySelector('.budget');if(budget)budget.hidden=true;
   const est=document.querySelector('#spaceEstimateLink');if(est)est.href='estimate.html';
-  bindFavorite(s.id,s.title,src);bindShowcaseInteractions();
+  bindFavorite(s.id,s.title,src);bindShowcaseInteractions();initShowcaseExtras(s.id,s.title);renderSimilar(s.id);
  }catch(e){document.querySelector('#showcaseTitle').textContent='쇼케이스를 불러오지 못했습니다';document.querySelector('#showcaseSubtitle').textContent=e.message+' · 백엔드 실행을 확인하세요.'}
 }
 
@@ -77,14 +77,14 @@ function bindShowcaseInteractions(){
 }
 
 // ================= 상품 상세 페이지 =================
-if(productBuy&&apiId){renderProductFromApi(apiId)}else{bindQuantity()}
+if(productBuy&&apiId){renderProductFromApi(apiId)}else if(productBuy){bindQuantity();setActiveCategory('Chair')}else{bindQuantity()}
 
 async function renderProductFromApi(id){
  try{
   const p=await fetchJson('/v1/products/'+encodeURIComponent(id));
   document.title=p.name+' | 지구별놀이터';
   document.querySelector('.product-buy h1').textContent=p.name;
-  const crumb=document.querySelector('.breadcrumbs');if(crumb)crumb.textContent='홈 › '+(p.category||'상품')+' › '+p.name;
+  const crumb=document.querySelector('.breadcrumbs');if(crumb)crumb.textContent='홈 › '+(p.category||'상품')+' › '+p.name;setActiveCategory(p.category);
   document.querySelector('.sku').textContent='SKU '+(p.code||p.id);
   document.querySelector('.original').textContent='정상가 '+Number(p.regularPrice).toLocaleString('ko-KR')+'원';
   document.querySelector('.sale').textContent='판매가 '+Number(p.salePrice).toLocaleString('ko-KR')+'원';
@@ -103,3 +103,21 @@ async function renderProductFromApi(id){
 if(!showcasePhoto){document.querySelectorAll('.scene-hotspot').forEach(point=>point.addEventListener('click',()=>{const box=document.querySelector('.selection-card');if(box){box.querySelector('strong').textContent=point.dataset.name;box.querySelector('small').textContent=point.dataset.price}}))}
 document.querySelectorAll('[data-toast]').forEach(button=>button.addEventListener('click',()=>showToast(button.dataset.toast)));
 document.querySelectorAll('.buy-actions button').forEach(button=>{if(button.textContent.trim()==='바로구매')button.addEventListener('click',()=>{location.href='checkout.html'})});
+
+// ===== 신규 프론트 기능(수정된 와이어프레임 반영) =====
+// 매장 리뷰(로컬 저장) · 비슷한 매장 · SNS 공유 · 갤러리 화살표 · 카테고리 활성
+const REVIEW_SEED=[
+ {author:'민지',rating:5,text:'자연스러운 톤과 조명이 너무 마음에 들어요. 실제 매장 구축할 때 참고하고 싶은 쇼케이스예요.',date:'2024-03-12'},
+ {author:'성진',rating:5,text:'제품 핀 마커가 보여서 어떤 제품이 사용되었는지 바로 확인할 수 있었어요. 구성비 예상도 도움이 많이 돼요.',date:'2024-03-08'},
+ {author:'하연',rating:4,text:'실제 매장과 비슷한 느낌의 쇼케이스라 참고하기 좋았어요. 비슷한 매장 섹션도 유용했어요.',date:'2024-03-02'}
+];
+const reviewKey=id=>'earthplayground-reviews-'+id;
+function loadReviews(id){try{const raw=localStorage.getItem(reviewKey(id));if(raw)return JSON.parse(raw)}catch{}return REVIEW_SEED.slice()}
+function renderReviews(id){const list=loadReviews(id),avg=list.length?list.reduce((s,r)=>s+Number(r.rating||0),0)/list.length:0;const a=document.querySelector('#reviewAvg'),c=document.querySelector('#reviewCount'),box=document.querySelector('#reviewList');if(a)a.textContent=list.length?avg.toFixed(1):'–';if(c)c.textContent=list.length;if(box)box.innerHTML=list.length?list.map(r=>{const n=Math.max(0,Math.min(5,Number(r.rating||0)));return `<article class="review-item"><div class="review-head"><strong>${escapeHtml(r.author)}</strong><span class="stars">${'★'.repeat(n)}${'☆'.repeat(5-n)}</span><time>${escapeHtml(r.date||'')}</time></div><p>${escapeHtml(r.text)}</p></article>`}).join(''):'<div class="empty-state">첫 리뷰를 남겨주세요.</div>'}
+function bindReviews(id){const stars=[...document.querySelectorAll('#starInput button')],form=document.querySelector('#reviewForm');if(!form)return;let star=5;const paint=()=>stars.forEach((b,i)=>b.classList.toggle('on',i<star));stars.forEach((b,i)=>b.onclick=()=>{star=i+1;paint()});paint();form.onsubmit=e=>{e.preventDefault();const author=(document.querySelector('#reviewAuthor').value||'').trim(),text=(document.querySelector('#reviewText').value||'').trim();if(!author||!text)return;const list=loadReviews(id);list.unshift({author,rating:star,text,date:new Date().toISOString().slice(0,10)});try{localStorage.setItem(reviewKey(id),JSON.stringify(list))}catch{}form.reset();star=5;paint();renderReviews(id);showToast('리뷰가 등록되었습니다.')}}
+function bindShare(title){const url=location.href;document.querySelectorAll('[data-share]').forEach(b=>b.onclick=async()=>{const t=b.dataset.share;if(t==='link'){try{await navigator.clipboard.writeText(url);showToast('링크를 복사했습니다.')}catch{showToast('링크 복사에 실패했습니다.')}}else if(t==='kakao'){showToast('카카오톡 공유는 준비 중입니다.')}else{window.open('https://www.instagram.com/','_blank','noopener')}})}
+function bindGalleryArrows(){const photo=document.querySelector('.showcase-photo'),thumbs=[...document.querySelectorAll('.thumb')];if(!photo||!thumbs.length)return;let idx=Math.max(0,thumbs.findIndex(t=>t.classList.contains('active')));const go=step=>{idx=(idx+step+thumbs.length)%thumbs.length;thumbs[idx].click()};const prev=document.querySelector('#galleryPrev'),next=document.querySelector('#galleryNext');if(prev)prev.onclick=()=>go(-1);if(next)next.onclick=()=>go(1)}
+function initShowcaseExtras(id,title){renderReviews(id);bindReviews(id);bindShare(title);bindGalleryArrows()}
+async function renderSimilar(currentId){const section=document.querySelector('#similar'),grid=document.querySelector('#similarGrid');if(!section||!grid)return;try{const data=await fetchJson('/v1/showcases'),others=(data.items||[]).filter(s=>s.id!==currentId).slice(0,3);if(!others.length){section.hidden=true;return}grid.innerHTML=others.map(s=>`<a class="space-card" href="showcase.html?id=${encodeURIComponent(s.id)}"><div class="space-image" style="${s.imageUrl?`background-image:url('${imgSrc(s.imageUrl)}');background-size:cover;background-position:center`:''}"></div><h3>${escapeHtml(s.title)}</h3><p>유사 스타일 사례</p></a>`).join('');section.hidden=false}catch{section.hidden=true}}
+const CATEGORY_MAP={chair:'우드 체어','우드 체어':'우드 체어',table:'테이블','테이블':'테이블',light:'조명',lighting:'조명','조명':'조명',shelf:'수납/선반',display:'수납/선반',sofa:'소파',stool:'스툴'};
+function setActiveCategory(cat){const key=String(cat||'').toLowerCase(),target=CATEGORY_MAP[key]||cat;document.querySelectorAll('.category-nav [data-cat]').forEach(a=>{const on=a.dataset.cat===target||a.dataset.cat.toLowerCase()===key;a.classList.toggle('active',on);if(on)a.closest('.cat-group')?.classList.add('open')})}

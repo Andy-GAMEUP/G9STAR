@@ -107,3 +107,44 @@
 .mini-admin.danger{border-color:#c2410c;color:#c2410c}
 .mini-admin.danger:hover{background:#c2410c;color:#fff}
 @media(max-width:640px){.rental-final{grid-template-columns:1fr}}
+
+/* ===== 수정된 프론트 와이어프레임: 공유·리뷰·비슷한매장·카테고리 ===== */
+.showcase-toolbar{flex-wrap:wrap;gap:12px}
+.share-bar{display:flex;align-items:center;gap:8px;font-size:12px;color:#6b7268}
+.share-bar>span{font-weight:600;color:#40523b}
+.share-btn{border:1px solid #d7ddd5;background:#fff;border-radius:999px;padding:6px 12px;font-size:12px;cursor:pointer;color:#40523b}
+.share-btn:hover{background:#40523b;color:#fff;border-color:#40523b}
+.gallery-nav{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.85);color:#40523b;font-size:22px;line-height:1;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.gallery-nav.prev{left:14px}.gallery-nav.next{right:14px}
+.gallery-nav:hover{background:#fff}
+/* 리뷰 */
+.reviews{padding:32px 0}
+.reviews .section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px}
+.review-score{white-space:nowrap;font-size:14px;color:#6b7268}
+.review-score strong{font-size:30px;color:#40523b;margin-right:6px}
+.review-form{display:grid;grid-template-columns:160px auto 1fr auto;gap:10px;align-items:center;margin:18px 0;padding:14px;border:1px solid #e6e9e3;border-radius:12px}
+.review-form input,.review-form textarea{border:1px solid #d7ddd5;border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit;resize:vertical}
+.star-input{display:flex;gap:2px}
+.star-input button{border:0;background:none;font-size:20px;line-height:1;color:#d7ddd5;cursor:pointer;padding:0}
+.star-input button.on{color:#f2b705}
+.review-list{display:flex;flex-direction:column;gap:14px}
+.review-item{border-bottom:1px solid #eef0ec;padding-bottom:14px}
+.review-head{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.review-head strong{font-size:14px}
+.review-head .stars{color:#f2b705;font-size:13px;letter-spacing:1px}
+.review-head time{margin-left:auto;color:#9aa39a;font-size:12px}
+.review-item p{margin:0;color:#4a5049;font-size:14px;line-height:1.6}
+/* 비슷한 매장 */
+.similar{padding:8px 0 40px}
+/* 상품 카테고리 사이드바 */
+.product-layout{display:grid;grid-template-columns:220px 1fr;gap:28px;align-items:start}
+.category-nav{position:sticky;top:90px;border:1px solid #e6e9e3;border-radius:12px;padding:16px}
+.category-nav h2{font-size:14px;margin:0 0 10px;color:#40523b}
+.cat-tree{list-style:none;margin:0;padding:0;font-size:13px}
+.cat-tree>li{padding:4px 0}
+.cat-tree a{color:#5c6359;text-decoration:none;display:block;padding:4px 6px;border-radius:6px}
+.cat-tree a:hover{background:#f2f5ef;color:#40523b}
+.cat-tree a.active{background:#40523b;color:#fff;font-weight:600}
+.cat-group>span{font-weight:700;color:#2f3a2b;display:block;padding:4px 6px}
+.cat-group>ul{list-style:none;margin:2px 0 6px;padding-left:10px;border-left:1px solid #e6e9e3}
+@media(max-width:900px){.product-layout{grid-template-columns:1fr}.category-nav{position:static;order:-1}.review-form{grid-template-columns:1fr;align-items:stretch}}
