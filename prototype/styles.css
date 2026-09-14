@@ -157,3 +157,36 @@
 .admin-home-link .home-ico{flex:0 0 auto;display:block}
 /* [hidden] 속성이 라벨 display 규칙에 덮이지 않도록 강제(카테고리 필터 등 토글 요소) */
 [hidden]{display:none!important}
+
+/* ---- rental catalog (front-20260915b) ---- */
+.rental-hero{margin:0 0 30px}
+.rental-hero .page-subtitle{max-width:720px}
+.rental-notes{display:flex;flex-wrap:wrap;gap:10px;list-style:none;margin:18px 0 0;padding:0}
+.rental-notes li{font-size:12px;color:#40523b;background:#eef1e9;border-radius:999px;padding:8px 14px}
+.rental-notes li:before{content:"✓";margin-right:7px;color:var(--green,#45584b)}
+.rental-filters{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 26px}
+.rental-filters button{border:1px solid var(--line);border-radius:999px;padding:9px 16px;background:white;font-size:13px;font-weight:700;cursor:pointer}
+.rental-filters button.active{background:var(--ink);color:white;border-color:var(--ink)}
+.rental-grid{margin-bottom:16px}
+.rental-grid>article{overflow:hidden;background:white;border-radius:10px;padding:0 0 18px;transition:transform .2s,box-shadow .2s}
+.rental-grid>article:hover{transform:translateY(-4px);box-shadow:0 18px 36px rgba(36,35,31,.1)}
+.rental-thumb{height:200px;position:relative;overflow:hidden}
+.rental-thumb:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,0) 55%,rgba(0,0,0,.05))}
+.rental-grid .meta{margin:14px 16px 0}
+.rental-grid h3{margin:6px 16px}
+.rental-grid .spec{margin:0 16px 8px;color:#6b6b63;font-size:12px;line-height:1.5}
+.rental-grid .price{margin:0 16px;font-size:15px}
+.rental-grid .price small{color:var(--muted);font-weight:600;margin-left:2px}
+.t-tent{background:linear-gradient(135deg,#eef2f5,#cdd7de 55%,#8fa3ad)}
+.t-booth{background:linear-gradient(135deg,#e7d9c2,#b98f5f 55%,#6d4f31)}
+.t-stall{background:linear-gradient(135deg,#efe6d4,#cbb083 55%,#8a6b42)}
+.t-table{background:linear-gradient(135deg,#ecdfce,#c9a97f 55%,#7c5f42)}
+.t-chair{background:linear-gradient(135deg,#e4ded6,#b7ab98 55%,#6f6656)}
+.t-parasol{background:linear-gradient(135deg,#f3ede2,#d8c19f 50%,#5b6a58)}
+.t-photo{background:linear-gradient(135deg,#e6e2da,#a8917a 55%,#4a4038)}
+.t-stage{background:linear-gradient(135deg,#e9dcc6,#a9865c 55%,#5a3f27)}
+.rental-empty{color:var(--muted);padding:40px 0;text-align:center}
+.rental-cta{margin-top:26px}
+.cta-desc{color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 20px}
+.buy-actions-2{grid-template-columns:repeat(2,1fr)}
+@media(max-width:800px){.rental-thumb{height:210px}}
