@@ -154,3 +154,6 @@
 .admin-home-link{margin-right:auto;display:inline-flex;align-items:center;gap:5px;color:#cdd6cf;text-decoration:none;font-size:12px;font-weight:600;padding:6px 12px;border:1px solid rgba(255,255,255,.22);border-radius:8px;white-space:nowrap}
 .admin-home-link:hover{background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.4)}
 @media(max-width:560px){.admin-home-link{padding:6px 9px}.admin-home-link .label{display:none}}
+.admin-home-link .home-ico{flex:0 0 auto;display:block}
+/* [hidden] 속성이 라벨 display 규칙에 덮이지 않도록 강제(카테고리 필터 등 토글 요소) */
+[hidden]{display:none!important}
