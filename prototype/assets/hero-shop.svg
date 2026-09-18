@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="원목 집기와 트랙 조명으로 꾸민 편집샵 매장 전경">
+ <defs>
+  <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">
+   <stop offset="0" stop-color="#f4ece0"/><stop offset="1" stop-color="#e9ddc9"/>
+  </linearGradient>
+  <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
+   <stop offset="0" stop-color="#e7d4b2"/><stop offset="1" stop-color="#d8c199"/>
+  </linearGradient>
+  <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1">
+   <stop offset="0" stop-color="#d7bd92"/><stop offset="1" stop-color="#c2a679"/>
+  </linearGradient>
+  <linearGradient id="woodDark" x1="0" y1="0" x2="0" y2="1">
+   <stop offset="0" stop-color="#c3a677"/><stop offset="1" stop-color="#a98a5c"/>
+  </linearGradient>
+  <radialGradient id="doorGlow" cx="0.5" cy="0.4" r="0.7">
+   <stop offset="0" stop-color="#fff7e8"/><stop offset="1" stop-color="#e3d3b4"/>
+  </radialGradient>
+  <radialGradient id="spot" cx="0.5" cy="0" r="1">
+   <stop offset="0" stop-color="#fff4dc" stop-opacity="0.85"/><stop offset="1" stop-color="#fff4dc" stop-opacity="0"/>
+  </radialGradient>
+  <linearGradient id="vign" x1="0" y1="0" x2="1" y2="1">
+   <stop offset="0" stop-color="#2a2620" stop-opacity="0.30"/>
+   <stop offset="0.55" stop-color="#2a2620" stop-opacity="0"/>
+  </linearGradient>
+ </defs>
+
+ <!-- walls & ceiling -->
+ <rect width="1600" height="900" fill="url(#wall)"/>
+ <rect width="1600" height="150" fill="#f6efe4"/>
+
+ <!-- back wall opening with warm light -->
+ <rect x="690" y="150" width="220" height="410" fill="url(#doorGlow)"/>
+ <rect x="690" y="150" width="220" height="410" fill="none" stroke="#d9c6a4" stroke-width="4"/>
+
+ <!-- ceiling track lights -->
+ <rect x="120" y="120" width="1360" height="10" rx="5" fill="#3c3a35"/>
+ <g fill="#3c3a35">
+  <rect x="250" y="118" width="16" height="26" rx="4"/><rect x="520" y="118" width="16" height="26" rx="4"/>
+  <rect x="790" y="118" width="16" height="26" rx="4"/><rect x="1060" y="118" width="16" height="26" rx="4"/>
+  <rect x="1330" y="118" width="16" height="26" rx="4"/>
+ </g>
+ <g opacity="0.8">
+  <polygon points="258,150 210,340 306,340" fill="url(#spot)"/>
+  <polygon points="528,150 480,340 576,340" fill="url(#spot)"/>
+  <polygon points="798,150 750,360 846,360" fill="url(#spot)"/>
+  <polygon points="1068,150 1020,340 1116,340" fill="url(#spot)"/>
+  <polygon points="1338,150 1290,340 1386,340" fill="url(#spot)"/>
+ </g>
+
+ <!-- floor -->
+ <polygon points="0,560 1600,560 1600,900 0,900" fill="url(#floor)"/>
+ <!-- floor plank perspective lines -->
+ <g stroke="#caae82" stroke-width="2" opacity="0.6">
+  <line x1="800" y1="560" x2="800" y2="900"/>
+  <line x1="640" y1="560" x2="360" y2="900"/><line x1="500" y1="560" x2="-100" y2="900"/>
+  <line x1="960" y1="560" x2="1240" y2="900"/><line x1="1100" y1="560" x2="1700" y2="900"/>
+  <line x1="0" y1="640" x2="1600" y2="640" stroke-opacity="0.5"/>
+  <line x1="0" y1="740" x2="1600" y2="740" stroke-opacity="0.5"/>
+ </g>
+
+ <!-- LEFT shelving unit -->
+ <g>
+  <rect x="40" y="215" width="300" height="360" fill="url(#wood)"/>
+  <rect x="40" y="215" width="300" height="360" fill="none" stroke="#a98a5c" stroke-width="3"/>
+  <g stroke="#a98a5c" stroke-width="4">
+   <line x1="40" y1="300" x2="340" y2="300"/><line x1="40" y1="385" x2="340" y2="385"/><line x1="40" y1="470" x2="340" y2="470"/>
+  </g>
+  <g fill="#8f7452" opacity="0.9">
+   <rect x="60" y="250" width="46" height="42" rx="4"/><rect x="130" y="256" width="40" height="36" rx="4"/><rect x="200" y="244" width="52" height="48" rx="6"/><rect x="272" y="258" width="44" height="34" rx="4"/>
+   <rect x="66" y="332" width="50" height="46" rx="5"/><rect x="150" y="340" width="42" height="38" rx="4"/><rect x="224" y="330" width="52" height="48" rx="6"/>
+   <rect x="60" y="418" width="44" height="44" rx="4"/><rect x="132" y="424" width="48" height="38" rx="5"/><rect x="212" y="416" width="46" height="46" rx="5"/><rect x="280" y="426" width="38" height="36" rx="4"/>
+  </g>
+ </g>
+
+ <!-- RIGHT shelving unit -->
+ <g>
+  <rect x="1260" y="215" width="300" height="360" fill="url(#wood)"/>
+  <rect x="1260" y="215" width="300" height="360" fill="none" stroke="#a98a5c" stroke-width="3"/>
+  <g stroke="#a98a5c" stroke-width="4">
+   <line x1="1260" y1="300" x2="1560" y2="300"/><line x1="1260" y1="385" x2="1560" y2="385"/><line x1="1260" y1="470" x2="1560" y2="470"/>
+  </g>
+  <g fill="#8f7452" opacity="0.9">
+   <rect x="1284" y="250" width="46" height="42" rx="4"/><rect x="1354" y="256" width="40" height="36" rx="4"/><rect x="1424" y="244" width="52" height="48" rx="6"/><rect x="1496" y="258" width="44" height="34" rx="4"/>
+   <rect x="1290" y="332" width="50" height="46" rx="5"/><rect x="1374" y="340" width="42" height="38" rx="4"/><rect x="1448" y="330" width="52" height="48" rx="6"/>
+   <rect x="1284" y="418" width="44" height="44" rx="4"/><rect x="1356" y="424" width="48" height="38" rx="5"/><rect x="1436" y="416" width="46" height="46" rx="5"/><rect x="1504" y="426" width="38" height="36" rx="4"/>
+  </g>
+ </g>
+
+ <!-- mid side low cabinets -->
+ <rect x="360" y="470" width="230" height="110" fill="url(#woodDark)"/>
+ <rect x="360" y="470" width="230" height="110" fill="none" stroke="#96784f" stroke-width="3"/>
+ <rect x="1010" y="470" width="230" height="110" fill="url(#woodDark)"/>
+ <rect x="1010" y="470" width="230" height="110" fill="none" stroke="#96784f" stroke-width="3"/>
+
+ <!-- central display table -->
+ <g>
+  <rect x="620" y="560" width="360" height="150" fill="url(#wood)"/>
+  <rect x="620" y="560" width="360" height="26" fill="#e3cda3"/>
+  <rect x="620" y="560" width="360" height="150" fill="none" stroke="#a98a5c" stroke-width="3"/>
+  <g fill="#7d6547">
+   <rect x="660" y="512" width="60" height="52" rx="8"/><rect x="760" y="500" width="70" height="64" rx="10"/><rect x="872" y="516" width="58" height="48" rx="8"/>
+  </g>
+ </g>
+
+ <!-- foreground low tables -->
+ <rect x="150" y="700" width="330" height="150" fill="url(#woodDark)"/>
+ <rect x="150" y="700" width="330" height="28" fill="#dcc59b"/>
+ <g fill="#6f5940"><rect x="200" y="648" width="70" height="58" rx="8"/><rect x="300" y="636" width="80" height="70" rx="10"/><rect x="400" y="652" width="56" height="54" rx="8"/></g>
+
+ <rect x="1120" y="700" width="330" height="150" fill="url(#woodDark)"/>
+ <rect x="1120" y="700" width="330" height="28" fill="#dcc59b"/>
+ <g fill="#6f5940"><rect x="1170" y="648" width="70" height="58" rx="8"/><rect x="1270" y="636" width="80" height="70" rx="10"/><rect x="1370" y="652" width="56" height="54" rx="8"/></g>
+
+ <!-- soft depth vignette (text side) -->
+ <rect width="1600" height="900" fill="url(#vign)"/>
+</svg>
