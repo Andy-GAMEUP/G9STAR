@@ -217,7 +217,7 @@
 
 /* ---- baked-text hero (hero-main.png, front-20260918) ---- */
 .figma-hero.hero-baked{height:auto}
-.figma-hero.hero-baked>img{height:auto;display:block}
+.figma-hero.hero-baked picture{display:block}.figma-hero.hero-baked img{width:100%;height:auto;display:block}
 .figma-hero.hero-baked:after{display:none}
 .hero-cta-hotspot{position:absolute;left:50%;top:85.5%;width:19%;height:8.5%;transform:translateX(-50%);border-radius:10px;z-index:3;cursor:pointer}
 .hero-cta-hotspot:focus-visible{outline:3px solid #fff;outline-offset:3px}
