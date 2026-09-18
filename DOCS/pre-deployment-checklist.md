@@ -14,7 +14,7 @@
 | 1 | 백엔드 필수 시크릿·개발토큰 차단 | 🔴 치명 | 인증 우회·토큰 위조 가능 |
 | 2 | 데이터 영속화(PostgreSQL 전환) | 🔴 치명 | 재시작 시 모든 데이터 소실 |
 | 3 | 이미지 스토리지 전환 | 🟠 높음 | 재배포·스케일아웃 시 업로드 이미지 유실 |
-| 4 | 도메인/URL 적용 (✅ starplayground.com 완료) | 🟠 높음 | SEO·공유·정규 URL 오작동 |
+| 4 | 도메인/URL 적용 (⏳ starplayground.com 잠정 · 확정 대기) | 🟠 높음 | SEO·공유·정규 URL 오작동 |
 | 5 | 프론트 API 엔드포인트 설정 | 🟠 높음 | 운영에서 API 연결 실패 |
 | 6 | HTTPS·CORS·보안 헤더 | 🟠 높음 | 혼합콘텐츠·CORS 차단·보안 취약 |
 | 7 | SEO 마무리(OG 이미지·서치콘솔) | 🟡 보통 | 검색 노출·소셜 공유 품질 저하 |
@@ -67,24 +67,22 @@ node --experimental-strip-types backend/src/server.ts
 
 ---
 
-## 4. ✅ 도메인 / URL — 정식 도메인 적용 완료
+## 4. ⏳ 도메인 / URL — 잠정 적용(정식 도메인 확정 대기)
 
-정식 도메인 **`https://www.starplayground.com`** 확정에 따라 SEO 메타(canonical·Open Graph)·`sitemap.xml`·`robots.txt`·JSON-LD·동적 SEO 스크립트의 도메인을 **일괄 치환 완료**(2026-09-18).
+> ⚠️ **현재 `https://www.starplayground.com`은 잠정값이며 최종 확정 도메인이 아닙니다.**
+> 기존 플레이스홀더(`earthplayground.co.kr`) 대신 잠정 도메인으로 일괄 치환만 해둔 상태입니다(2026-09-18).
+> 정식 도메인이 결정되면 아래 한 줄로 교체하고, 이 항목을 완료 처리하세요.
 
-- [x] 전 페이지 canonical·OG URL 치환
-- [x] `prototype/robots.txt`의 `Sitemap:` URL 갱신
-- [x] `prototype/sitemap.xml`의 모든 `<loc>` 갱신
-- [x] 동적 SEO 스크립트 상수(`detail.js`의 `SITE`, `rental-detail.html`·`rental.html` 절대경로) 갱신
-
-> 도메인이 다시 변경될 경우 아래로 재치환:
-> ```bash
-> cd prototype
-> grep -rl "www.starplayground.com" . robots.txt sitemap.xml \
->   | xargs sed -i '' 's|https://www.starplayground.com|https://<새도메인>|g'
-> ```
-
-- [ ] **실제 도메인 연결/DNS·TLS 인증서 발급** 후 위 절대 URL이 실서비스와 일치하는지 확인
-- [ ] 도메인이 `www` 유무·http/https 리다이렉트로 canonical과 일치하도록 웹서버 설정
+- [x] SEO URL을 잠정 도메인으로 통일 치환(canonical·OG·sitemap·robots·동적 스크립트)
+- [ ] **정식 도메인 확정** 후 아래로 재치환:
+  ```bash
+  cd prototype
+  grep -rl "www.starplayground.com" . robots.txt sitemap.xml \
+    | xargs sed -i '' 's|https://www.starplayground.com|https://<확정도메인>|g'
+  ```
+- [ ] 치환 대상 확인: 전 페이지 canonical·OG, `robots.txt`의 `Sitemap:`, `sitemap.xml`의 모든 `<loc>`, 동적 스크립트 상수(`detail.js`의 `SITE`, `rental-detail.html`·`rental.html` 절대경로)
+- [ ] **실제 도메인 연결/DNS·TLS 인증서 발급** 후 절대 URL이 실서비스와 일치하는지 확인
+- [ ] 도메인 `www` 유무·http/https 리다이렉트를 canonical과 일치하도록 웹서버 설정
 
 ---
 
