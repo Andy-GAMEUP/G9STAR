@@ -375,3 +375,17 @@
 .case-reference-page .apparel-installation-build{margin:0 0 40px}
 .case-reference-page .apparel-installation-build img{height:clamp(260px,28vw,360px)}
 .case-reference-page .reference-cta{padding:32px 36px;margin-top:8px}
+
+/* ===== 시공사례 헤더 정렬·도면 여백 정돈 (front-20260919e) ===== */
+/* 톤/최종 시각화: 헤더를 좌측 stack(제목 축소 → 서브텍스트 아래로) */
+.case-reference-page .apparel-tone-section>header,
+.case-reference-page .final-visual-copy{display:block;margin-bottom:22px;max-width:760px}
+.case-reference-page .apparel-tone-section h3,
+.case-reference-page .final-visual-copy h3{font-size:clamp(23px,2.3vw,32px);line-height:1.3;margin:8px 0 12px;letter-spacing:-.03em;max-width:640px}
+.case-reference-page .apparel-tone-section header>p:last-child,
+.case-reference-page .final-visual-copy>p:last-child{max-width:620px;margin:0}
+/* 도면(2번째) 섹션: 플랜 카드 ~30% 축소 + 내부 흰 여백 제거, 좌측 카피와 상단 정렬 */
+.case-reference-page .apparel-plan-stage:has(.single-plan){grid-template-columns:1.06fr .94fr;align-items:start;gap:24px 44px}
+.case-reference-page .apparel-plan-stage>.case-copy{grid-row:auto;align-self:start;padding:0 12px 0 0}
+.case-reference-page .apparel-plan-stage .single-plan{width:min(100%,470px);justify-self:end;align-self:start}
+.case-reference-page .apparel-plan-stage .single-plan img{width:100%;height:auto;max-height:none;padding:12px;object-fit:contain}
