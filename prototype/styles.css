@@ -348,3 +348,30 @@
  .case-reference-page .reference-cta{flex-direction:column;align-items:flex-start;gap:20px;padding:32px 24px}
  .case-reference-page .case-build img{height:auto;aspect-ratio:4/3}
 }
+
+/* ===== 시공사례(reference) 압축 정렬 (front-20260919d) ===== */
+.case-reference-page .case-hero{padding:24px 0 36px}
+.case-reference-page .case-hero h1{margin-bottom:16px}
+.case-reference-page .case-jump{margin-top:22px}
+.case-reference-page .case-project{padding:40px 0}
+.case-reference-page .case-project-head{gap:44px;margin-bottom:22px}
+.case-reference-page .case-lead-photo,
+.case-reference-page .fruit-lead-photo{height:clamp(340px,38vw,500px)}
+.case-reference-page .apparel-storefront{height:clamp(340px,40vw,520px);margin-bottom:40px}
+.case-reference-page .apparel-final-visual .case-lead-photo{height:clamp(340px,40vw,520px)}
+.case-reference-page .case-furniture-section{margin:34px 0 22px;padding:30px 34px;gap:40px}
+.case-reference-page .case-plan-section{margin:22px 0;padding:30px 34px;gap:40px}
+.case-reference-page .case-before-after{gap:40px;margin-bottom:40px}
+.case-reference-page .apparel-before-after{gap:40px;margin-bottom:40px}
+.case-reference-page .case-insights{margin:22px 0 40px}
+.case-reference-page .case-build{margin-top:18px;gap:18px}
+.case-reference-page .case-build img{height:clamp(240px,26vw,340px)}
+.case-reference-page .case-visual-guide{margin:34px 0 40px;padding:26px;gap:18px}
+.case-reference-page .apparel-tone-section{margin-bottom:40px;padding:32px 34px}
+.case-reference-page .apparel-tone-section>header{margin-bottom:20px}
+.case-reference-page .apparel-plan-stage{gap:22px 40px;margin-bottom:40px}
+.case-reference-page .apparel-plan-stage .single-plan img{max-height:520px;padding:16px}
+.case-reference-page .apparel-final-visual{padding-top:40px}
+.case-reference-page .apparel-installation-build{margin:0 0 40px}
+.case-reference-page .apparel-installation-build img{height:clamp(260px,28vw,360px)}
+.case-reference-page .reference-cta{padding:32px 36px;margin-top:8px}
