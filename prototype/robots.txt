@@ -1,0 +1,10 @@
+# 지구별놀이터 robots.txt
+User-agent: *
+Allow: /
+# 개인/운영 페이지는 색인 제외
+Disallow: /admin.html
+Disallow: /checkout.html
+Disallow: /coupons.html
+Disallow: /signup.html
+
+Sitemap: https://www.earthplayground.co.kr/sitemap.xml

@@ -96,7 +96,29 @@ async function renderProductFromApi(id){
   bindQuantity();
   const grid=document.querySelector('.showcase-grid');
   if(grid)grid.innerHTML=(p.showcases||[]).map(s=>`<a class="space-card" href="showcase.html?id=${encodeURIComponent(s.id)}"><div class="space-image" style="background-image:url('${imgSrc(s.imageUrl)}');background-size:cover;background-position:center"></div><h3>${escapeHtml(s.title)}</h3><p>실제 배치 매장</p></a>`).join('')||'<p class="empty-state">아직 배치된 매장이 없습니다.</p>';
+  applyProductSeo(p);
  }catch(e){document.querySelector('.product-buy h1').textContent='상품을 불러오지 못했습니다';const sku=document.querySelector('.sku');if(sku)sku.textContent=e.message}
+}
+
+// 상품 SEO 메타·구조화 데이터 동적 갱신
+function applyProductSeo(p){
+ try{
+  const SITE='https://www.earthplayground.co.kr';
+  const url=SITE+'/product.html?id='+encodeURIComponent(p.id);
+  const img=(p.images&&p.images[0])?imgSrc(p.images[0]):SITE+'/assets/wood-chair.png';
+  const abs=/^https?:/.test(img)?img:SITE+'/'+String(img).replace(/^\//,'');
+  const desc=`${p.name} — 지구별놀이터 상업공간용 가구. 판매가 ${Number(p.salePrice).toLocaleString('ko-KR')}원. 매장에 맞는 가구를 구매하세요.`;
+  const setMeta=(sel,attr,val)=>{const el=document.querySelector(sel);if(el)el.setAttribute(attr,val)};
+  setMeta('meta[name="description"]','content',desc);
+  setMeta('#canonicalLink','href',url);
+  setMeta('#ogTitle','content',p.name+' | 지구별놀이터');setMeta('#ogDesc','content',desc);setMeta('#ogUrl','content',url);setMeta('#ogImage','content',abs);
+  setMeta('#twTitle','content',p.name+' | 지구별놀이터');setMeta('#twImage','content',abs);
+  const ld={"@context":"https://schema.org","@graph":[
+   {"@type":"Product","name":p.name,"sku":p.code||p.id,"category":p.category||undefined,"image":abs,"description":desc,"brand":{"@type":"Brand","name":p.brand||"지구별놀이터"},"offers":{"@type":"Offer","priceCurrency":"KRW","price":Number(p.salePrice||0),"availability":p.status==='ACTIVE'?"https://schema.org/InStock":"https://schema.org/OutOfStock","url":url}},
+   {"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"홈","item":SITE+"/"},{"@type":"ListItem","position":2,"name":"제품","item":SITE+"/product.html"},{"@type":"ListItem","position":3,"name":p.name,"item":url}]}
+  ]};
+  const s=document.createElement('script');s.type='application/ld+json';s.id='productLd';s.textContent=JSON.stringify(ld);const old=document.getElementById('productLd');if(old)old.remove();document.head.appendChild(s);
+ }catch(e){}
 }
 
 // ================= 공통(정적 페이지 포함) =================
