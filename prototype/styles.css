@@ -389,3 +389,10 @@
 .case-reference-page .apparel-plan-stage>.case-copy{grid-row:auto;align-self:start;padding:0 12px 0 0}
 .case-reference-page .apparel-plan-stage .single-plan{width:min(100%,470px);justify-self:end;align-self:start}
 .case-reference-page .apparel-plan-stage .single-plan img{width:100%;height:auto;max-height:none;padding:12px;object-fit:contain}
+
+/* ===== 헤더 내비 일관화 + 현재 페이지 활성 표시 (front-20260919f) ===== */
+.storefront .site-header nav{font-size:14px;gap:30px}
+.storefront .site-header nav a{font-size:14px;line-height:1;padding:6px 0;position:relative;white-space:nowrap;color:var(--ink)}
+.storefront .site-header nav a:hover{color:var(--accent)}
+.storefront .site-header nav a[aria-current="page"]{color:var(--accent);font-weight:800}
+.storefront .site-header nav a[aria-current="page"]::after{content:"";position:absolute;left:0;right:0;bottom:-3px;height:2px;border-radius:2px;background:var(--accent)}
