@@ -103,7 +103,7 @@ async function renderProductFromApi(id){
 // 상품 SEO 메타·구조화 데이터 동적 갱신
 function applyProductSeo(p){
  try{
-  const SITE='https://www.earthplayground.co.kr';
+  const SITE='https://www.starplayground.com';
   const url=SITE+'/product.html?id='+encodeURIComponent(p.id);
   const img=(p.images&&p.images[0])?imgSrc(p.images[0]):SITE+'/assets/wood-chair.png';
   const abs=/^https?:/.test(img)?img:SITE+'/'+String(img).replace(/^\//,'');
