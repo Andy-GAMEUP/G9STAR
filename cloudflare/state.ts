@@ -1,6 +1,7 @@
 import {neon} from '@neondatabase/serverless';
 import {R2AssetStorage} from './storage.ts';
 import {createApplication} from '../backend/src/application.ts';
+import {MemoryDatabase} from '../backend/src/infrastructure/database.ts';
 export type SqlDatabase={query:(text:string,params?:any[])=>Promise<any[]>};
 export function database(env:any):SqlDatabase{
  if(env.TEST_DATABASE)return env.TEST_DATABASE;
@@ -10,7 +11,7 @@ export function database(env:any):SqlDatabase{
 }
 export async function loadApplication(db:SqlDatabase,env:any){
  const [row]=await db.query('SELECT version,payload FROM beta_state WHERE id=1');
- const app=await createApplication({snapshot:row?row.payload:null,storage:env.UPLOADS?new R2AssetStorage(env.UPLOADS):undefined,uploads:!!env.UPLOADS,payments:false,devTokens:false,adminLogin:env.ADMIN_LOGIN,adminPassword:env.ADMIN_PASSWORD});
+ const app=await createApplication({database:new MemoryDatabase(),snapshot:row?row.payload:null,storage:env.UPLOADS?new R2AssetStorage(env.UPLOADS):undefined,uploads:!!env.UPLOADS,payments:false,devTokens:false,adminLogin:env.ADMIN_LOGIN,adminPassword:env.ADMIN_PASSWORD});
  return{app,version:row?Number(row.version):null};
 }
 export async function saveApplication(db:SqlDatabase,app:any,version:number|null){

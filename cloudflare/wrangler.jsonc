@@ -3,6 +3,7 @@
   "main": "worker.ts",
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat"],
+  "keep_vars": true,
   "assets": {"directory":"../prototype","binding":"ASSETS","run_worker_first":["/api/*"]},
   "r2_buckets": [{"binding":"UPLOADS","bucket_name":"g9star-beta-assets"}],
   "vars": {"ADMIN_LOGIN":"starplayground99@gmail.com","QUOTE_RECIPIENT":"starplayground99@gmail.com","CHALLENGE_REQUIRED":"true"},
