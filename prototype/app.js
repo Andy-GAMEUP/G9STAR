@@ -4,7 +4,7 @@ document.querySelectorAll('.hotspot,[data-product]').forEach(point=>{point.addEv
 document.querySelectorAll('.filters button').forEach(button=>button.addEventListener('click',()=>{document.querySelector('.filters .active')?.classList.remove('active');button.classList.add('active');const filter=button.dataset.filter;document.querySelectorAll('.space-card[data-kind]').forEach(card=>{card.hidden=filter!=='all'&&card.dataset.kind!==filter})}));
 const quoteForm=document.querySelector('.quote form');if(quoteForm)quoteForm.addEventListener('submit',event=>{event.preventDefault();event.currentTarget.querySelector('.form-note').textContent='프로토타입 접수가 완료되었습니다.'});
 (async()=>{
- const API=(localStorage.getItem('earthplayground-api')||'http://127.0.0.1:4100').replace(/\/$/,'');
+ const API=(window.G9STAR.apiBase).replace(/\/$/,'');
  const src=u=>!u?'':(/^https?:\/\//.test(u)?u:(u.startsWith('/uploads/')?API+u:u));
  const cards=document.querySelectorAll('.showcase-six .figma-space-card');
  if(cards.length){try{const data=await fetch(API+'/v1/showcases').then(r=>r.json());(data.items||[]).slice(0,cards.length).forEach((s,i)=>{const card=cards[i];card.href='showcase.html?id='+encodeURIComponent(s.id);const img=card.querySelector('img');if(img&&s.imageUrl){img.src=src(s.imageUrl);img.alt=s.title}const h3=card.querySelector('h3');if(h3)h3.textContent=s.title;const p=card.querySelector('p');if(p)p.textContent='실제 등록 매장'})}catch(e){}}

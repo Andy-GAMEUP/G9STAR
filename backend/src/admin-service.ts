@@ -12,6 +12,8 @@ export class AdminService{
   {code:'OLDSEP5',target:'B Partner',partnerId:'P-B',benefit:'5%',status:'REVOKED',memberId:null,orderId:null,updatedAt:'2026-09-08T05:22:00.000Z',reason:'프로모션 조기종료',actor:'admin02'}
  ];
  constructor(platform:PlatformService){this.platform=platform}
+ exportState(){return{coupons:this.coupons}}
+ restoreState(state:{coupons:Coupon[]}){this.coupons=state.coupons}
  dashboard(memberId='M-1029',partnerId='P-A',period='2026-09-01'){
   const member=this.platform.db.members.get(memberId);if(!member)throw new DomainError('MEMBER_NOT_FOUND','회원을 찾을 수 없습니다.',404);
   const partner=this.platform.db.partners.get(partnerId);if(!partner)throw new DomainError('PARTNER_NOT_FOUND','파트너를 찾을 수 없습니다.',404);

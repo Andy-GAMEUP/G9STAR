@@ -1,0 +1,12 @@
+{
+  "name": "g9star-beta",
+  "main": "worker.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {"directory":"../prototype","binding":"ASSETS","run_worker_first":["/api/*"]},
+  "d1_databases": [{"binding":"DB","database_name":"g9star-beta","database_id":"00000000-0000-0000-0000-000000000000","migrations_dir":"migrations"}],
+  "r2_buckets": [{"binding":"UPLOADS","bucket_name":"g9star-beta-assets"}],
+  "vars": {"ADMIN_LOGIN":"starplayground99@gmail.com","QUOTE_RECIPIENT":"starplayground99@gmail.com","CHALLENGE_REQUIRED":"true"},
+  "triggers": {"crons":["*/5 * * * *"]},
+  "observability": {"enabled":true}
+}

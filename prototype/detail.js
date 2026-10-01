@@ -6,7 +6,7 @@ const showcaseConfigs={
  retail:{title:'망원 라이프스타일 숍',breadcrumb:'리테일 › Curated Minimal › 망원동 20평',subtitle:'리테일 · 20평 · Curated Minimal · 사용제품 14개',image:'assets/retail-showcase.png',products:[['모듈 디스플레이 테이블 D-510','620,000원'],['블랙 행거 시스템 H-210','390,000원'],['오크 월 선반 S-520','480,000원'],['트랙 스포트 조명 L-510','89,000원'],['카운터 데스크 T-540','1,180,000원']]},
  office:{title:'성수 크리에이티브 오피스',breadcrumb:'오피스 › Warm Workscape › 성수동 28평',subtitle:'오피스 · 28평 · Warm Workscape · 사용제품 18개',image:'assets/office-showcase.png',products:[['10인 워크 테이블 T-710','2,800,000원'],['메시 태스크 체어 C-720','280,000원'],['어쿠스틱 펜던트 L-710','240,000원'],['모듈 스토리지 S-730','920,000원'],['라운지 소파 B-710','1,480,000원']]}
 };
-const API=(localStorage.getItem('earthplayground-api')||'http://127.0.0.1:4100').replace(/\/$/,'');
+const API=(window.G9STAR.apiBase).replace(/\/$/,'');
 const params=new URLSearchParams(location.search),apiId=params.get('id');
 const imgSrc=u=>!u?'':(/^https?:\/\//.test(u)?u:(u.startsWith('/uploads/')?API+u:u));
 const wonText=n=>n==null?'견적 상품':'₩'+Number(n).toLocaleString('ko-KR');
@@ -27,9 +27,8 @@ const applySelection=(name,price,productId)=>{const card=document.querySelector(
 function bindQuantity(){let quantity=1;document.querySelectorAll('[data-qty]').forEach(button=>button.addEventListener('click',()=>{quantity=Math.max(1,quantity+(button.dataset.qty==='plus'?1:-1));const q=document.querySelector('#qty');if(q)q.textContent=quantity}))}
 
 // ================= 쇼케이스 페이지 =================
-if(showcasePhoto){
- if(apiId){renderShowcaseFromApi(apiId)}else{renderShowcaseFromConfig()}
-}
+// Initialize after category and review data declarations.
+
 
 function renderShowcaseFromConfig(){
  const key=new URLSearchParams(location.search).get('space')||'cafe',config=showcaseConfigs[key]||showcaseConfigs.cafe,selection=document.querySelector('.selection-card');
@@ -77,7 +76,7 @@ function bindShowcaseInteractions(){
 }
 
 // ================= 상품 상세 페이지 =================
-if(productBuy&&apiId){renderProductFromApi(apiId)}else if(productBuy){bindQuantity();setActiveCategory('Chair')}else{bindQuantity()}
+// Product initialization is deferred to the end of this file.
 
 async function renderProductFromApi(id){
  try{
@@ -103,7 +102,7 @@ async function renderProductFromApi(id){
 // 상품 SEO 메타·구조화 데이터 동적 갱신
 function applyProductSeo(p){
  try{
-  const SITE='https://www.starplayground.com';
+  const SITE='https://g9star.co.kr';
   const url=SITE+'/product.html?id='+encodeURIComponent(p.id);
   const img=(p.images&&p.images[0])?imgSrc(p.images[0]):SITE+'/assets/wood-chair.png';
   const abs=/^https?:/.test(img)?img:SITE+'/'+String(img).replace(/^\//,'');
@@ -143,3 +142,6 @@ function initShowcaseExtras(id,title){renderReviews(id);bindReviews(id);bindShar
 async function renderSimilar(currentId){const section=document.querySelector('#similar'),grid=document.querySelector('#similarGrid');if(!section||!grid)return;try{const data=await fetchJson('/v1/showcases'),others=(data.items||[]).filter(s=>s.id!==currentId).slice(0,3);if(!others.length){section.hidden=true;return}grid.innerHTML=others.map(s=>`<a class="space-card" href="showcase.html?id=${encodeURIComponent(s.id)}"><div class="space-image" style="${s.imageUrl?`background-image:url('${imgSrc(s.imageUrl)}');background-size:cover;background-position:center`:''}"></div><h3>${escapeHtml(s.title)}</h3><p>유사 스타일 사례</p></a>`).join('');section.hidden=false}catch{section.hidden=true}}
 const CATEGORY_MAP={chair:'우드 체어','우드 체어':'우드 체어',table:'테이블','테이블':'테이블',light:'조명',lighting:'조명','조명':'조명',shelf:'수납/선반',display:'수납/선반',sofa:'소파',stool:'스툴'};
 function setActiveCategory(cat){const key=String(cat||'').toLowerCase(),target=CATEGORY_MAP[key]||cat;document.querySelectorAll('.category-nav [data-cat]').forEach(a=>{const on=a.dataset.cat===target||a.dataset.cat.toLowerCase()===key;a.classList.toggle('active',on);if(on)a.closest('.cat-group')?.classList.add('open')})}
+
+if(showcasePhoto){if(apiId){renderShowcaseFromApi(apiId)}else{renderShowcaseFromConfig()}}
+if(productBuy&&apiId){renderProductFromApi(apiId)}else if(productBuy){bindQuantity();setActiveCategory('Chair')}else{bindQuantity()}

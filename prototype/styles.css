@@ -396,3 +396,21 @@
 .storefront .site-header nav a:hover{color:var(--accent)}
 .storefront .site-header nav a[aria-current="page"]{color:var(--accent);font-weight:800}
 .storefront .site-header nav a[aria-current="page"]::after{content:"";position:absolute;left:0;right:0;bottom:-3px;height:2px;border-radius:2px;background:var(--accent)}
+
+/* Public beta: preserve grid shrinkage and readable mobile controls. */
+[hidden]{display:none!important}
+.product-layout,.product-main-col,.product-gallery,.product-buy,.category-nav{min-width:0}
+.category-nav{max-width:100%;overflow-wrap:anywhere}
+.flow-card label{display:block;margin-bottom:1rem}
+.flow-card input{max-width:100%;width:100%;font:inherit;padding:.75rem}
+#adminLoginPanel{max-width:520px;margin:3rem auto;padding:1rem}
+@media(max-width:560px){
+ .product-layout{grid-template-columns:minmax(0,1fr)}
+ .detail-grid{grid-template-columns:minmax(0,1fr)}
+ .category-nav .cat-tree{max-width:100%;overflow-x:auto}
+ .buy-actions{flex-wrap:wrap}
+ .estimate-fields input,.estimate-fields textarea,.estimate-fields select{font-size:16px;min-width:0;max-width:100%}
+ .check-row{align-items:flex-start;line-height:1.6}
+ .check-row input[type=checkbox]{flex:0 0 auto;margin-top:.3rem}
+ .admin-header{flex-wrap:wrap;height:auto;min-height:64px;gap:.5rem;padding:.75rem}
+}

@@ -7,4 +7,4 @@ Disallow: /checkout.html
 Disallow: /coupons.html
 Disallow: /signup.html
 
-Sitemap: https://www.starplayground.com/sitemap.xml
+Sitemap: https://g9star.co.kr/sitemap.xml

@@ -26,3 +26,6 @@ build/
 
 # Claude Code local tooling state
 .claude/
+
+.wrangler/
+.dev.vars
