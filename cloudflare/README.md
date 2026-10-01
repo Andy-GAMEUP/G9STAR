@@ -85,3 +85,7 @@ npx wrangler dev --var CHALLENGE_REQUIRED:false
 ## 기존 저장소에서 이전
 
 이번 전환은 아직 운영 D1에 배포하지 않은 상태를 기준으로 한다. D1 또는 기존 PostgreSQL에 실제 고객 데이터가 있으면 자동 이전되지 않는다. 먼저 쓰기를 중지하고 백업·테이블/스냅샷 변환·복원 검증을 수행해야 한다. 이 베타의 beta_state 스키마는 기존 Node backend의 정규화 PostgreSQL 테이블과 별개다.
+
+## GitHub 빌드 시작과 첫 배포
+
+기존 정적 파일 전용 Worker의 New deployment는 파일 업로드 화면이다. 이 프로젝트는 GitHub Workers Builds로 worker.ts와 정적 파일을 함께 배포한다. 올바른 브랜치·루트·빌드 명령을 저장한 후 해당 브랜치에 커밋을 push하면 빌드가 시작된다. 파일 감시 필터가 있으면 cloudflare 변경이 포함되어야 한다. 배포 성공 후 Runtime Variables and Secrets에 DATABASE_URL 등 운영 비밀값을 등록한다. Builds 내부 Variables and secrets는 빌드용이므로 구분한다.
