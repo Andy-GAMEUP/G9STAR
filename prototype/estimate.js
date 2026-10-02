@@ -1,6 +1,8 @@
 (function(){
  const cards=[...document.querySelectorAll('.industry-card')],form=document.querySelector('#estimateForm'),result=document.querySelector('#estimateResult'),space=new URLSearchParams(location.search).get('space'),spaceIndustry={cafe:'카페',bakery:'베이커리',ramen:'레스토랑',salon:'미용실',retail:'리테일',office:'오피스'};let industry=spaceIndustry[space]||'카페',requestId=crypto.randomUUID();
  cards.forEach(card=>card.addEventListener('click',()=>{cards.forEach(item=>{item.classList.remove('selected');item.setAttribute('aria-checked','false')});card.classList.add('selected');card.setAttribute('aria-checked','true');industry=card.dataset.industry}));
+ const rentalParams=new URLSearchParams(location.search),rentalId=rentalParams.get('rental'),rentalName=rentalParams.get('name');
+ if(rentalId){const parsedQuantity=Number(rentalParams.get('qty')),quantity=Number.isSafeInteger(parsedQuantity)&&parsedQuantity>0?parsedQuantity:1;const note=form.elements.note;note.value=['렌탈 문의: '+(rentalName||rentalId),'상품번호: '+rentalId,'수량: '+quantity, note.value].filter(Boolean).join('\n');}
  const preset=cards.find(card=>card.dataset.industry===industry);if(preset)preset.click();
  let lastPayload='';
  form.addEventListener('submit',async event=>{

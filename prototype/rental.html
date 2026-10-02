@@ -32,23 +32,24 @@
 </main>
 <div class="toast" role="status"></div>
 <div class="mobile-cta"><a href="product.html?id=PRD-101">제품</a><a href="rental.html">렌탈</a><a href="estimate.html">견적 의뢰</a></div>
-<script src="rental-data.js?v=front-20260915d"></script>
+<script src="rental-data.js?v=fixes-20261002"></script>
 <script>
 (async function(){
   var R=window.RENTAL, grid=document.getElementById('rentalGrid'),
       empty=document.getElementById('rentalEmpty'), filters=document.getElementById('rentalFilters');
-  await R.load(); // 백엔드 카탈로그 우선(실패 시 로컬 시드)
+  await R.load();
+  if(R.error)empty.textContent=R.error;
   // 필터 칩 생성
   R.categories.forEach(function(cat){
     var b=document.createElement('button');b.setAttribute('data-cat',cat);b.textContent=cat;filters.appendChild(b);
   });
   // 카드 생성(상세로 링크)
   grid.innerHTML=R.all().map(function(p){
-    return '<a class="rental-card" data-cat="'+p.cat+'" href="rental-detail.html?id='+p.id+'">'
+    return '<a class="rental-card" data-cat="'+R.escape(p.cat)+'" href="rental-detail.html?id='+encodeURIComponent(p.id)+'">'
       +'<div class="rental-thumb '+p.thumb+'"></div>'
-      +'<p class="meta">'+p.tag+' · '+p.cat+'</p>'
-      +'<h3>'+p.name+'</h3>'
-      +'<p class="spec">'+p.spec+'</p>'
+      +'<p class="meta">'+p.tag+' · '+R.escape(p.cat)+'</p>'
+      +'<h3>'+R.escape(p.name)+'</h3>'
+      +'<p class="spec">'+R.escape(p.spec)+'</p>'
       +'<p class="price">일 '+R.price(p.price)+' <small>~</small></p></a>';
   }).join('');
   // 구조화 데이터(ItemList) 주입 — 검색엔진 리치결과용
@@ -71,7 +72,8 @@
     apply(b.getAttribute('data-cat'));
   });});
   // 해시 딥링크 예) rental.html#부스
-  var h=decodeURIComponent(location.hash.replace('#',''));
+  apply('all');
+  var h='';try{h=decodeURIComponent(location.hash.replace('#',''));}catch{}
   if(h){var t=[].find.call(btns,function(b){return b.getAttribute('data-cat')===h;});if(t)t.click();}
 })();
 </script>
