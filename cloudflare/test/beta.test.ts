@@ -9,7 +9,7 @@ class Postgres{
  async query(sql:string,args:any[]=[]){return (await this.pg.query(sql,args)).rows}
  async close(){await this.pg.close()}
 }
-const createEnv=(db:any)=>({TEST_DATABASE:db,JWT_SECRET:process.env.JWT_SECRET,ADMIN_LOGIN:'starplayground99@gmail.com',ADMIN_PASSWORD:'local-admin-secret-with-more-than-thirty-two-characters',CHALLENGE_REQUIRED:'false'});
+const createEnv=(db:any)=>({TEST_DATABASE:db,JWT_SECRET:process.env.JWT_SECRET,ADMIN_LOGIN:'admin@example.com',ADMIN_PASSWORD:'local-admin-secret-with-more-than-thirty-two-characters',CHALLENGE_REQUIRED:'false'});
 const context={waitUntil(_promise:Promise<any>){}};
 const request=(path:string,body?:any,token?:string)=>new Request('https://g9star.co.kr/api'+path,{method:body===undefined?'GET':'POST',headers:{'content-type':'application/json',...(token?{authorization:`Bearer ${token}`}:{})},...(body===undefined?{}:{body:JSON.stringify(body)})});
 const quote={requestId:'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',industry:'카페',area:'18평',location:'서울',style:'Natural',budget:'1,000~3,000만원',contact:'테스트 매장',phone:'010-1234-5678',note:'테스트 견적',consent:true};
@@ -54,7 +54,7 @@ test('동시 가입과 쿠폰 발급은 기존 저장값을 덮어쓰지 않는�
  }finally{await db.close()}
 });
 test('메일 알림은 지정된 수신처와 동일한 견적 멱등키를 사용한다',async()=>{
- let captured:any;const provider:any=async(_url:any,init:any)=>{captured=init;return Response.json({id:'mock-mail-id'})};const result=await sendQuote({RESEND_API_KEY:'test-only',QUOTE_FROM:'quotes@g9star.co.kr'},{id:'Q-test',customerName:'테스트',phone:'010-1234-5678',industry:'카페'},provider);assert.equal(result,'mock-mail-id');assert.deepEqual(JSON.parse(captured.body).to,['starplayground99@gmail.com']);assert.equal(captured.headers['idempotency-key'],'quote-Q-test');await assert.rejects(()=>sendQuote({},{}),/EMAIL_NOT_CONFIGURED/);
+ let captured:any;const provider:any=async(_url:any,init:any)=>{captured=init;return Response.json({id:'mock-mail-id'})};const result=await sendQuote({RESEND_API_KEY:'test-only',QUOTE_FROM:'quotes@g9star.co.kr',QUOTE_RECIPIENT:'admin@example.com'},{id:'Q-test',customerName:'테스트',phone:'010-1234-5678',industry:'카페'},provider);assert.equal(result,'mock-mail-id');assert.deepEqual(JSON.parse(captured.body).to,['admin@example.com']);assert.equal(captured.headers['idempotency-key'],'quote-Q-test');await assert.rejects(()=>sendQuote({},{}),/EMAIL_NOT_CONFIGURED/);
 });
 
 test('관리자 이미지는 R2에 저장하고 권한 없는 업로드를 거부한다',async()=>{
@@ -162,14 +162,15 @@ test('회원 이메일 인증·가입·로그인·임시 비밀번호·영속성
  globalThis.fetch=async(_url:any,init:any)=>{mails.push(JSON.parse(init.body));return Response.json({id:'mock-member-mail'});};
  const call=(p:string,b?:any,t?:string)=>worker.fetch(request(p,b,t),env,context),address='member@example.com';
  try{
-  const input={email:address,name:'인증회원',password:'Pass123!',phone:'01012345678',directCode:'RS-A001-KIM',privacyConsent:true,termsConsent:true};
+  const input={email:address,name:'인증회원',password:'Pass123!',phone:'01012345678',privacyConsent:true,termsConsent:true};
   assert.equal((await call('/v1/members',input)).status,422);
   assert.equal((await call('/v1/member-auth/send-verification',{email:address})).status,200);assert.deepEqual(mails[0].to,[address]);const code=mails[0].text.match(/인증번호: (\d{6})/)[1];
   assert.equal((await call('/v1/member-auth/verify-email',{email:address,code:'wrong'})).status,422);
   const proof:any=await(await call('/v1/member-auth/verify-email',{email:address,code})).json();assert.ok(proof.verificationToken);
   assert.equal((await call('/v1/members',{...input,verificationToken:proof.verificationToken,privacyConsent:false})).status,422);
   assert.equal((await call('/v1/members',{...input,verificationToken:proof.verificationToken,password:'abcdefgh'})).status,422);
-  const signup=await call('/v1/members',{...input,verificationToken:proof.verificationToken});assert.equal(signup.status,201);const registered:any=await signup.json();assert.equal(registered.member.name,input.name);
+  assert.equal((await call('/v1/members',{...input,directCode:'RS-NOT-FOUND',verificationToken:proof.verificationToken})).status,404);
+  const signup=await call('/v1/members',{...input,verificationToken:proof.verificationToken});assert.equal(signup.status,201);const registered:any=await signup.json();assert.equal(registered.member.name,input.name);assert.equal(registered.member.firstAttribution,null);assert.equal(registered.member.currentAttribution,null);const restored=await loadApplication(db,env);assert.equal(restored.app.service.db.members.get(registered.member.id)?.currentAttribution,null);assert.equal(restored.app.backoffice.detail('members',registered.member.id).partnerId,null);
   assert.equal((await call('/v1/members',{...input,verificationToken:proof.verificationToken})).status,409);
   assert.equal((await call('/v1/member-auth/login',{email:address,password:'wrong'})).status,401);
   const auth:any=await(await call('/v1/member-auth/login',{email:address,password:input.password})).json();assert.ok(auth.accessToken);assert.equal((await call('/v1/member-auth/session',undefined,registered.accessToken)).status,401);

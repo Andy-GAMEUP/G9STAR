@@ -77,7 +77,7 @@ npx wrangler dev --var CHALLENGE_REQUIRED:false
 - 이번 Neon 저장 방식은 작은 베타용 전체 상태 JSONB 스냅샷이다. D1 구현의 900KB 제한은 제거했지만, 모든 업무 상태를 읽고 쓰므로 데이터 증가에 따라 응답시간·Worker 메모리·CPU 비용이 증가한다. 버전 조건부 갱신으로 동시 저장 유실을 방지한다. 대규모 사용자 테스트 전에는 회원·쿠폰·견적·감사를 개별 테이블로 정규화해야 한다. 현재 코드의 처리량과 무료 Worker CPU 한도는 실계정에서 확인해야 한다.
 - Cloudflare 검사에서는 PGlite(PostgreSQL 엔진)로 SQL·저장소 재연결·동시 쓰기를 확인한다. Neon 운영망 연결·재배포 후 유지·컴퓨팅 절전 후 응답은 별도 실계정 검증 대상이다.
 - Neon 무료 사용량과 유휴 컴퓨팅 정책을 확인한다. 5분마다 메일 재시도 cron이 DB를 조회하므로 컴퓨팅을 깨울 수 있다. 사용량을 모니터링하고 무료 한도에 접근하면 재시도 주기를 조정한다. 백업은 별도로 export해 보관한다.
-- 회원은 이메일 인증 및 추천코드 확인 후 가입한다. 로그인·로그아웃·암호 복구를 지원하며 고객 토큰은 1시간이다.
+- 회원은 이메일 인증 후 가입한다. 추천인 코드는 선택 항목이며 입력한 경우에만 검증한다. 로그인·로그아웃·암호 복구를 지원하며 고객 토큰은 1시간이다.
 - 마스터 SUPER_ADMIN 및 추가 관리자 계정을 지원한다. 역할과 세션은 서버에서 검증하며 같은 계정의 새 로그인은 이전 세션을 종료한다.
 
 참고: https://developers.cloudflare.com/workers/static-assets/ · https://developers.cloudflare.com/workers/databases/third-party-integrations/neon/ · https://developers.cloudflare.com/turnstile/get-started/server-side-validation/ · https://resend.com/docs/api-reference/emails/send-email

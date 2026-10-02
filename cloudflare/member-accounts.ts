@@ -55,7 +55,7 @@ export async function memberRequest(app:any,request:Request,env:any,body:ArrayBu
   const row=pending.find((a:any)=>a.email===address&&a.verified&&a.expiresAt>Date.now());if(!row||typeof i.verificationToken!=='string'||digest(i.verificationToken)!==row.tokenHash)fail('이메일 인증을 완료해 주세요.',422,'EMAIL_VERIFICATION_REQUIRED');
   const name=typeof i.name==='string'&&i.name.trim()?i.name.trim():address.split('@')[0];if(name.length>100)fail('이름을 확인하세요.');
   const member=app.service.signup({name,linkCode:i.linkCode,directCode:i.directCode},'customer');
-  app.backoffice.create('members',{id:member.id,name,email:address,phone,partnerId:member.currentAttribution.partnerId,memberType:'BETA',memos:[],orders:[],estimates:[],rentals:[],status:'ACTIVE'},'customer');
+  app.backoffice.create('members',{id:member.id,name,email:address,phone,partnerId:member.currentAttribution?.partnerId??null,memberType:'BETA',memos:[],orders:[],estimates:[],rentals:[],status:'ACTIVE'},'customer');
   const a={memberId:member.id,email:address,phone,passwordHash:await hash(p),sessionId:crypto.randomUUID(),emailVerifiedAt:new Date().toISOString(),consent:{terms:true,privacy:true,version:'2026-10-02',at:new Date().toISOString()}};accounts.push(a);pending.splice(pending.indexOf(row),1);return Response.json(await accountResponse(a),{status:201});
  }
  if(!request.headers.get('authorization')){if(isAuth)fail('로그인이 필요합니다.',401,'UNAUTHENTICATED');return null;}

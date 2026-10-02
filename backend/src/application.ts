@@ -38,8 +38,8 @@ const route=async(req:IncomingMessage,res:ServerResponse)=>{
  
  if(method==='POST'&&url.pathname==='/v1/admin/login'){
   const login=stringField(input,'login',{max:100})!,password=stringField(input,'password',{max:200})!;
-  const expected=options.adminPassword,expectedLogin=options.adminLogin||'starplayground99@gmail.com';
-  if(!expected||expected.length<32)throw new DomainError('ADMIN_NOT_CONFIGURED','관리자 인증 설정이 필요합니다.',503);
+  const expected=options.adminPassword,expectedLogin=options.adminLogin||'';
+  if(!expectedLogin||!expected||expected.length<32)throw new DomainError('ADMIN_NOT_CONFIGURED','관리자 인증 설정이 필요합니다.',503);
   const digest=(value:string)=>createHash('sha256').update(value).digest();
   if(login!==expectedLogin||!timingSafeEqual(digest(password),digest(expected)))throw new DomainError('INVALID_CREDENTIALS','로그인 정보를 확인하세요.',401);
   return json(res,200,{accessToken:await issueToken({sub:expectedLogin,role:'SUPER_ADMIN'}),role:'SUPER_ADMIN',user:expectedLogin});
@@ -60,7 +60,7 @@ const route=async(req:IncomingMessage,res:ServerResponse)=>{
   return json(res,201,{id:quote.id,notificationStatus:quote.notificationStatus});
  }
  if(method==='POST'&&url.pathname==='/v1/referrals/validate'){const code=stringField(input,'code',{max:100})!;return json(res,200,sql?await sql.validateReferral(code):service.validateReferral(code))}
- if(method==='POST'&&url.pathname==='/v1/members'){const value={name:stringField(input,'name',{max:100})!,linkCode:stringField(input,'linkCode',{required:false,max:100}),directCode:stringField(input,'directCode',{required:false,max:100})};const member=sql?await sql.signup(value,'customer'):service.signup(value,'customer');if(!sql)backoffice.create('members',{id:String((member as any).id),name:(member as any).name,partnerId:(member as any).currentAttribution.partnerId,memberType:'BETA',memos:[],orders:[],estimates:[],rentals:[],status:'ACTIVE'},'customer');const accessToken=await issueToken({sub:String((member as any).id),role:'CUSTOMER'});return json(res,201,{...member,accessToken})}
+ if(method==='POST'&&url.pathname==='/v1/members'){const value={name:stringField(input,'name',{max:100})!,linkCode:stringField(input,'linkCode',{required:false,max:100}),directCode:stringField(input,'directCode',{required:false,max:100})};const member=sql?await sql.signup(value,'customer'):service.signup(value,'customer');if(!sql)backoffice.create('members',{id:String((member as any).id),name:(member as any).name,partnerId:(member as any).currentAttribution?.partnerId??null,memberType:'BETA',memos:[],orders:[],estimates:[],rentals:[],status:'ACTIVE'},'customer');const accessToken=await issueToken({sub:String((member as any).id),role:'CUSTOMER'});return json(res,201,{...member,accessToken})}
  if(method==='POST'&&url.pathname.match(/^\/v1\/members\/[^/]+\/attribution-change-requests$/)){const principal=await authenticate(req);requireRole(principal,['OPERATOR','SUPER_ADMIN']);const memberId=url.pathname.split('/')[3],value={memberId,targetCode:stringField(input,'targetCode',{max:100})!,effectiveFrom:isoDateTimeField(input,'effectiveFrom'),reason:stringField(input,'reason',{max:500})!,retroactive:booleanField(input,'retroactive',{required:false})};return json(res,201,sql?await sql.requestAttributionChange(value,principal.sub,principal.role):service.requestAttributionChange(value,principal.sub,principal.role))}
  const approve=url.pathname.match(/^\/v1\/attribution-change-requests\/([^/]+)\/approve$/);if(method==='POST'&&approve){const principal=await authenticate(req);requireRole(principal,['SUPER_ADMIN']);return json(res,200,sql?await sql.approveAttributionChange(approve[1],principal.sub):service.approveAttributionChange(approve[1],principal.sub,principal.role))}
  if(method==='GET'&&url.pathname==='/v1/showcases')return json(res,200,backoffice.storefrontShowcases());
