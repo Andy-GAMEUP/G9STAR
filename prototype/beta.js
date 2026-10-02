@@ -10,7 +10,7 @@
   const config=await window.G9STAR.ready;if(!config.turnstileSiteKey){if(config.challengeRequired)throw Error('테스트 사용 준비중입니다. 잠시 후 다시 시도해 주세요.');return ''}
   if(!challengePromise)challengePromise=new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';script.onload=resolve;script.onerror=()=>reject(Error('보안 확인을 불러오지 못했습니다.'));document.head.append(script)});
   await challengePromise;
-  const container=document.querySelector('#estimateChallenge,#signupChallenge,#adminChallenge');if(!container)throw Error('보안 확인을 표시할 수 없습니다.');
+  const container=document.querySelector('dialog[open] #adminRecoveryChallenge')||document.querySelector('#estimateChallenge,#signupChallenge,#adminChallenge');if(!container)throw Error('보안 확인을 표시할 수 없습니다.');
   container.replaceChildren();return new Promise((resolve,reject)=>{window.turnstile.render(container,{sitekey:config.turnstileSiteKey,callback:resolve,'error-callback':()=>reject(Error('보안 확인을 다시 시도해 주세요.')),'expired-callback':()=>reject(Error('보안 확인이 만료됐습니다. 다시 시도해 주세요.'))})});
  };
 })();

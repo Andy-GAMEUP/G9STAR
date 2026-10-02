@@ -10,7 +10,7 @@ async function invoke(app:any,request:Request,body:ArrayBuffer){
  await app.route(req,res);delete headers['access-control-allow-origin'];headers['cache-control']='no-store';return new Response(status===204?null:output,{status,headers});
 }
 async function protect(request:Request,env:any,db:any){
- const path=new URL(request.url).pathname;const challenged=['/api/v1/estimates','/api/v1/members','/api/v1/admin/login'].includes(path);
+ const path=new URL(request.url).pathname;const challenged=['/api/v1/estimates','/api/v1/members','/api/v1/admin/login','/api/v1/admin/password-recovery'].includes(path);
  const ip=request.headers.get('cf-connecting-ip')||'local';const minute=Math.floor(Date.now()/60000),hash=Buffer.from(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(ip))).toString('hex');const key=`${minute}:${hash}:${path}`;
  const [count]=await db.query('INSERT INTO beta_rate_limits(key,count,expires_at) VALUES($1,1,$2) ON CONFLICT(key) DO UPDATE SET count=beta_rate_limits.count+1 RETURNING count',[key,Date.now()+120000]);
  if(count.count>(challenged?10:60))throw new DomainError('RATE_LIMITED','요청이 많습니다. 잠시 후 다시 시도해 주세요.',429);
@@ -43,8 +43,9 @@ export default{
    }
    if(url.pathname==='/api/health'){await db.query('SELECT 1 AS ok');return Response.json({status:'ok',service:'g9star-beta',database:'postgresql',databaseHealthy:true},{headers:{'cache-control':'no-store'}})}
    const body=await request.arrayBuffer();if(body.byteLength>bodyLimit)return error('PAYLOAD_TOO_LARGE','요청이 너무 큽니다.',413);
+   const recoveryContext={db};
    for(let attempt=0;attempt<8;attempt++){
-    const {app,version}=await loadApplication(db,env);const response=await adminRequest(app,request,env,body)||await invoke(app,request,body);response.headers.set('cache-control','no-store');if(!response.ok)return response;
+    const {app,version}=await loadApplication(db,env);const response=await adminRequest(app,request,env,body,recoveryContext)||await invoke(app,request,body);response.headers.set('cache-control','no-store');if(!response.ok)return response;
     if(request.method==='GET'||request.method==='OPTIONS'||await saveApplication(db,app,version)){
      if(url.pathname==='/api/v1/estimates'&&request.method==='POST')ctx.waitUntil(flushMail(env));return response;
     }

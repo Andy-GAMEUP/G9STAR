@@ -112,3 +112,41 @@ test('마스터 비밀번호 변경은 환경변수 암호로 되돌아가지 �
  const logs:any=await (await call('/ops/dashboard',undefined,current)).json();assert.ok(!JSON.stringify(logs).includes('Abcd12!?'));
  }finally{await db.close()}
 });
+test('이메일 임시 비밀번호는 일회용이며 변경 전 업무 접근을 차단한다',async()=>{
+ const db=await new Postgres().ready(),env={...createEnv(db),RESEND_API_KEY:'test-key',QUOTE_FROM:'admin@g9star.co.kr'},original=globalThis.fetch;const mails:any[]=[];
+ globalThis.fetch=async(url:any,init:any)=>{assert.equal(String(url),'https://api.resend.com/emails');mails.push({headers:init.headers,body:JSON.parse(init.body)});return Response.json({id:'mail-test'})};
+ const call=(p:string,b?:any,t?:string)=>worker.fetch(request('/v1/admin'+p,b,t),env,context);
+ try{const old=(await (await call('/login',{login:env.ADMIN_LOGIN,password:env.ADMIN_PASSWORD})).json()).accessToken;
+ const result=await call('/password-recovery',{email:env.ADMIN_LOGIN});assert.equal(result.status,200);const known=await result.json();assert.equal(mails.length,1);assert.deepEqual(mails[0].body.to,[env.ADMIN_LOGIN]);assert.ok(mails[0].headers['idempotency-key'].startsWith('admin-recovery-'));
+ const temporary=mails[0].body.text.match(/관리자 임시 비밀번호: ([^\n]+)/)[1];assert.ok(temporary.length>=8);assert.match(temporary,/[A-Za-z]/);assert.match(temporary,/[0-9]/);assert.match(temporary,/!/);
+ assert.equal((await call('/session',undefined,old)).status,200);
+ assert.deepEqual(await (await call('/password-recovery',{email:'unknown@example.com'})).json(),known);
+ assert.deepEqual(await (await call('/password-recovery',{email:env.ADMIN_LOGIN})).json(),known);assert.equal(mails.length,1);
+ const login=await call('/login',{login:env.ADMIN_LOGIN,password:temporary});assert.equal(login.status,200);const recovered:any=await login.json();assert.equal(recovered.mustChangePassword,true);
+ assert.equal((await call('/session',undefined,old)).status,401);assert.equal((await call('/ops/dashboard',undefined,recovered.accessToken)).status,403);
+ const session:any=await (await call('/session',undefined,recovered.accessToken)).json();assert.equal(session.mustChangePassword,true);assert.equal('recovery' in session,false);assert.equal('passwordHash' in session,false);
+ assert.equal((await call('/login',{login:env.ADMIN_LOGIN,password:temporary})).status,401);assert.equal((await call('/login',{login:env.ADMIN_LOGIN,password:env.ADMIN_PASSWORD})).status,401);
+ assert.equal((await call('/password',{currentPassword:temporary,newPassword:'Fresh12!'},recovered.accessToken)).status,200);
+ assert.equal((await call('/session',undefined,recovered.accessToken)).status,401);const next=await call('/login',{login:env.ADMIN_LOGIN,password:'Fresh12!'});assert.equal(next.status,200);assert.equal((await next.json()).mustChangePassword,false);
+ assert.equal((await call('/login',{login:env.ADMIN_LOGIN,password:temporary})).status,401);
+ const [row]:any=await db.query('SELECT payload FROM beta_state WHERE id=1');assert.ok(!JSON.stringify(row.payload).includes(temporary));assert.ok(!JSON.stringify(row.payload).includes('Fresh12!'));assert.equal(row.payload.adminAccounts[0].recovery,undefined);
+ }finally{globalThis.fetch=original;await db.close()}
+});
+test('메일 실패·만료·보안 확인 실패 때는 기존 비밀번호가 유지된다',async()=>{
+ const db=await new Postgres().ready(),env={...createEnv(db),RESEND_API_KEY:'test-key',QUOTE_FROM:'admin@g9star.co.kr'},original=globalThis.fetch;let mail:any;
+ const call=(p:string,b?:any,t?:string)=>worker.fetch(request('/v1/admin'+p,b,t),env,context);
+ try{const old=(await (await call('/login',{login:env.ADMIN_LOGIN,password:env.ADMIN_PASSWORD})).json()).accessToken;
+ globalThis.fetch=async()=>new Response('{}',{status:500});assert.equal((await call('/password-recovery',{email:env.ADMIN_LOGIN})).status,503);assert.equal((await call('/session',undefined,old)).status,200);
+ const secured={...env,CHALLENGE_REQUIRED:'true',TURNSTILE_SECRET_KEY:'test-secret'};assert.equal((await worker.fetch(request('/v1/admin/password-recovery',{email:env.ADMIN_LOGIN}),secured,context)).status,422);
+ await db.query("DELETE FROM beta_rate_limits WHERE key LIKE 'admin-recovery:%'");globalThis.fetch=async(_url:any,init:any)=>{mail=JSON.parse(init.body);return Response.json({id:'mail-test'})};assert.equal((await call('/password-recovery',{email:env.ADMIN_LOGIN})).status,200);
+ const temporary=mail.text.match(/관리자 임시 비밀번호: ([^\n]+)/)[1];const [row]:any=await db.query('SELECT payload FROM beta_state WHERE id=1');row.payload.adminAccounts[0].recovery.expiresAt=Date.now()-1;await db.query('UPDATE beta_state SET payload=$1::jsonb,version=version+1 WHERE id=1',[JSON.stringify(row.payload)]);
+ assert.equal((await call('/login',{login:env.ADMIN_LOGIN,password:temporary})).status,401);assert.equal((await call('/login',{login:env.ADMIN_LOGIN,password:env.ADMIN_PASSWORD})).status,200);
+ }finally{globalThis.fetch=original;await db.close()}
+});
+test('저장 충돌로 재시도해도 임시 비밀번호 메일은 한 번만 발송한다',async()=>{
+ const db=await new Postgres().ready(),base=createEnv(db),original=globalThis.fetch;let count=0,temporary='',conflict=false;
+ const query=db.query.bind(db);const env={...base,RESEND_API_KEY:'test-key',QUOTE_FROM:'admin@g9star.co.kr',TEST_DATABASE:{query:async(sql:string,args:any[])=>{if(conflict&&sql.startsWith('UPDATE beta_state')){conflict=false;return []}return query(sql,args)}}};
+ try{assert.equal((await worker.fetch(request('/v1/admin/login',{login:env.ADMIN_LOGIN,password:env.ADMIN_PASSWORD}),env,context)).status,200);conflict=true;globalThis.fetch=async(_url:any,init:any)=>{count++;temporary=JSON.parse(init.body).text.match(/관리자 임시 비밀번호: ([^\n]+)/)[1];return Response.json({id:'mail-test'})};
+ assert.equal((await worker.fetch(request('/v1/admin/password-recovery',{email:env.ADMIN_LOGIN}),env,context)).status,200);assert.equal(count,1);assert.equal((await worker.fetch(request('/v1/admin/login',{login:env.ADMIN_LOGIN,password:temporary}),env,context)).status,200);
+ }finally{globalThis.fetch=original;await db.close()}
+});
