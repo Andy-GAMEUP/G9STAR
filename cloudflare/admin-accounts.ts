@@ -14,7 +14,7 @@ export async function adminRequest(app:any,request:Request,env:any,body:ArrayBuf
  const adminPath=path.startsWith('/api/v1/admin/');
  if(!adminPath&&!request.headers.get('authorization'))return null;
  const state=app.adminAccounts;
- const input=()=>{try{return JSON.parse(new TextDecoder().decode(body))}catch{return fail('입력 형식을 확인하세요.')}};
+ const input=()=>{try{const value=JSON.parse(new TextDecoder().decode(body));if(!value||typeof value!=='object'||Array.isArray(value))return fail('입력 형식을 확인하세요.');return value}catch{return fail('입력 형식을 확인하세요.')}};
  if(path==='/api/v1/admin/login'&&method==='POST'){
   const i=input(),login=text(i.login,'로그인 ID').toLowerCase(),p=typeof i.password==='string'?i.password:'';
   if(!p||p.length>200)fail('로그인 정보를 확인하세요.',401,'INVALID_CREDENTIALS');
@@ -25,7 +25,7 @@ export async function adminRequest(app:any,request:Request,env:any,body:ArrayBuf
    account={id:crypto.randomUUID(),email:master,name:'마스터 관리자',role:'SUPER_ADMIN',status:'ACTIVE',passwordHash:await hash(p),createdAt:new Date().toISOString()};state.push(account);
   }else if(account.status!=='ACTIVE'||!await matches(p,account.passwordHash))fail('로그인 정보를 확인하세요.',401,'INVALID_CREDENTIALS');
   account.sessionId=crypto.randomUUID();account.lastLoginAt=new Date().toISOString();app.service.db.log('ADMIN_LOGIN',account.id,{email:account.email});
-  return Response.json({accessToken:await issueToken({sub:account.id,role:account.role,sessionId:account.sessionId}),role:account.role,user:account.email});
+  return Response.json({accessToken:await issueToken({sub:account.id,role:account.role,sessionId:account.sessionId}),role:account.role,user:account.email,permissions:app.backoffice.roleMatrix[account.role]||[]});
  }
  const principal=await authenticate({headers:Object.fromEntries(request.headers)} as any);
  if(!adminPath&&principal.role==='CUSTOMER')return null;
