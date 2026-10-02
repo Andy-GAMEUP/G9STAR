@@ -1,5 +1,7 @@
 # 지구별놀이터 Backend
 
+> 현재 공개 베타는 Cloudflare Worker + Neon 상태 저장 방식이다. 아래 Node 서버·정규화 DB 안내를 운영 Worker DB에 바로 적용하지 않는다. [개발자 인수인계](../DOCS/developer-handover-20261002.md)를 먼저 참고한다.
+
 확정된 추천인·쿠폰·파트너 정산 정책과 Figma A-01~A-13 백오피스 업무를 집행하는 백엔드다. Node.js 22로 실행되며 개발용 메모리 모드와 PostgreSQL 운영 모드를 모두 제공한다.
 
 ## 실행

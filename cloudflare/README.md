@@ -1,6 +1,6 @@
 # 지구별놀이터 Cloudflare 공개 베타
 
-고객 화면은 공개하며 관리자 API만 로그인과 역할 검사를 적용한다. 결제와 쿠폰 사용은 비활성화한다. 견적은 서버에 저장한 뒤 `starplayground99@gmail.com`으로 알림을 보낸다. Gmail 계정의 비밀번호는 필요하지 않다.
+고객 화면은 공개하며 관리자 API만 로그인과 역할 검사를 적용한다. 결제와 쿠폰 사용은 비활성화한다. 견적은 서버에 저장한 뒤 등록된 운영 이메일으로 알림을 보낸다. Gmail 계정의 비밀번호는 필요하지 않다.
 
 ## 구성
 
@@ -31,9 +31,9 @@
 | `ADMIN_PASSWORD` | Secret | 베타 운영자용 무작위 32자 이상 |
 | `RESEND_API_KEY` | Secret | 발신 도메인에 대해 발송 가능한 키 |
 | `TURNSTILE_SECRET_KEY` | Secret | 서버 검증 키 |
-| `ADMIN_LOGIN` | Variable | `starplayground99@gmail.com` |
-| `QUOTE_RECIPIENT` | Variable | `starplayground99@gmail.com` |
-| `QUOTE_FROM` | Variable | 인증된 발신 주소, 예: `지구별놀이터 <quotes@g9star.co.kr>` |
+| `ADMIN_LOGIN` | Variable | 등록된 운영 이메일 |
+| `QUOTE_RECIPIENT` | Variable | 등록된 운영 이메일 |
+| `QUOTE_FROM` | Variable | Resend에서 인증된 발신 주소 (Worker 콘솔 확인) |
 | `TURNSTILE_SITE_KEY` | Variable | 공개 사이트 키 |
 | `BETA_HOSTNAME` | Variable | 실제 Worker 베타 호스트명, URL scheme 제외 |
 | `CHALLENGE_REQUIRED` | Variable | `true`; 공개 배포에서 끄지 않음 |
@@ -77,8 +77,8 @@ npx wrangler dev --var CHALLENGE_REQUIRED:false
 - 이번 Neon 저장 방식은 작은 베타용 전체 상태 JSONB 스냅샷이다. D1 구현의 900KB 제한은 제거했지만, 모든 업무 상태를 읽고 쓰므로 데이터 증가에 따라 응답시간·Worker 메모리·CPU 비용이 증가한다. 버전 조건부 갱신으로 동시 저장 유실을 방지한다. 대규모 사용자 테스트 전에는 회원·쿠폰·견적·감사를 개별 테이블로 정규화해야 한다. 현재 코드의 처리량과 무료 Worker CPU 한도는 실계정에서 확인해야 한다.
 - Cloudflare 검사에서는 PGlite(PostgreSQL 엔진)로 SQL·저장소 재연결·동시 쓰기를 확인한다. Neon 운영망 연결·재배포 후 유지·컴퓨팅 절전 후 응답은 별도 실계정 검증 대상이다.
 - Neon 무료 사용량과 유휴 컴퓨팅 정책을 확인한다. 5분마다 메일 재시도 cron이 DB를 조회하므로 컴퓨팅을 깨울 수 있다. 사용량을 모니터링하고 무료 한도에 접근하면 재시도 주기를 조정한다. 백업은 별도로 export해 보관한다.
-- 회원은 기존 추천코드 확인 후 가입하는 흐름을 유지한다. 현재 고객 토큰은 1시간이며, 정식 로그인·세션 재발급은 별도 기능이다.
-- 관리자 베타 로그인은 한 운영자 자격 증명으로 SUPER_ADMIN 역할을 발급한다. 화면에서 선택한 임의 역할로 인증 토큰을 발급하지 않는다. 다중 운영자·개별 계정 인증은 후속 작업이다.
+- 회원은 이메일 인증 및 추천코드 확인 후 가입한다. 로그인·로그아웃·암호 복구를 지원하며 고객 토큰은 1시간이다.
+- 마스터 SUPER_ADMIN 및 추가 관리자 계정을 지원한다. 역할과 세션은 서버에서 검증하며 같은 계정의 새 로그인은 이전 세션을 종료한다.
 
 참고: https://developers.cloudflare.com/workers/static-assets/ · https://developers.cloudflare.com/workers/databases/third-party-integrations/neon/ · https://developers.cloudflare.com/turnstile/get-started/server-side-validation/ · https://resend.com/docs/api-reference/emails/send-email
 
@@ -108,3 +108,5 @@ npx wrangler dev --var CHALLENGE_REQUIRED:false
 - 비밀번호·인증번호·가입 인증 토큰은 해시만 저장. 메일 공급자 멱등키와 요청 내 상태로 저장 충돌 재시도 시 중복 발송 차단.
 - 이전 데모 가입은 이메일·암호를 수집하지 않아 로그인 계정으로 자동 전환할 수 없음. 기존 자료는 유지하고 새로운 인증 가입 필요.
 - 로그인은 동일 회원의 이전 세션을 종료하며 로그아웃/암호 변경 후 토큰을 차단. 임시 암호는 15분, 한 번 사용 후 강제 변경.
+
+현재 운영 구성과 인수인계는 [개발자 인수인계](../DOCS/developer-handover-20261002.md)를 참고한다.
