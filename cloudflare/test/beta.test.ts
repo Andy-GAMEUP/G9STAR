@@ -103,12 +103,12 @@ test('마스터 비밀번호 변경은 환경변수 암호로 되돌아가지 �
  const db=await new Postgres().ready(),env=createEnv(db);
  const call=(p:string,b?:any,t?:string)=>worker.fetch(request('/v1/admin'+p,b,t),env,context);
  try{const token=(await (await call('/login',{login:env.ADMIN_LOGIN,password:env.ADMIN_PASSWORD})).json()).accessToken;
- assert.equal((await call('/password',{currentPassword:env.ADMIN_PASSWORD,newPassword:'short'},token)).status,422);
- assert.equal((await call('/password',{currentPassword:env.ADMIN_PASSWORD,newPassword:'NewMasterPassword123!'},token)).status,200);
+ for(const invalid of ['Ab1!xyz','Abcd1234','123456!?','Abcdef!?','Abcd123가','A1!'+ 'a'.repeat(198)])assert.equal((await call('/password',{currentPassword:env.ADMIN_PASSWORD,newPassword:invalid},token)).status,422);
+ assert.equal((await call('/password',{currentPassword:env.ADMIN_PASSWORD,newPassword:'Abcd12!?'},token)).status,200);
  assert.equal((await call('/session',undefined,token)).status,401);
  assert.equal((await call('/login',{login:env.ADMIN_LOGIN,password:env.ADMIN_PASSWORD})).status,401);
- const login=await call('/login',{login:env.ADMIN_LOGIN,password:'NewMasterPassword123!'});assert.equal(login.status,200);
+ const login=await call('/login',{login:env.ADMIN_LOGIN,password:'Abcd12!?'});assert.equal(login.status,200);
  const current=(await login.json()).accessToken;const response=await call('/session',undefined,current);assert.equal(response.headers.get('cache-control'),'no-store');assert.equal(response.status,200);
- const logs:any=await (await call('/ops/dashboard',undefined,current)).json();assert.ok(!JSON.stringify(logs).includes('NewMasterPassword123!'));
+ const logs:any=await (await call('/ops/dashboard',undefined,current)).json();assert.ok(!JSON.stringify(logs).includes('Abcd12!?'));
  }finally{await db.close()}
 });

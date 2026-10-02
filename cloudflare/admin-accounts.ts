@@ -6,7 +6,7 @@ const fail=(message:string,status=422,code='VALIDATION_ERROR'):never=>{throw new
 const hash=async(password:string,salt=randomBytes(16).toString('hex'))=>{const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveBits']);const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(salt),iterations:100000,hash:'SHA-256'},key,256);return `${salt}:${Buffer.from(bits).toString('hex')}`};
 const matches=async(password:string,value:string)=>{const [salt,key]=value.split(':');return timingSafeEqual(Buffer.from((await hash(password,salt)).split(':')[1],'hex'),Buffer.from(key,'hex'))};
 const equal=(a:string,b:string)=>timingSafeEqual(createHash('sha256').update(a).digest(),createHash('sha256').update(b).digest());
-const password=(value:any)=>{if(typeof value!=='string'||value.length<12||value.length>200||!/[A-Za-z]/.test(value)||!/[0-9]/.test(value))fail('비밀번호는 영문과 숫자를 포함한 12~200자로 입력하세요.');return value};
+const password=(value:any)=>{if(typeof value!=='string'||value.length<8||value.length>200||!/[A-Za-z]/.test(value)||!/[0-9]/.test(value)||!/[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]/.test(value))fail('비밀번호는 영문·숫자·특수문자를 모두 포함한 8~200자로 입력하세요.');return value};
 const text=(value:any,label:string,max=100)=>{if(typeof value!=='string'||!value.trim()||value.length>max)fail(`${label}을 확인하세요.`);return value.trim()};
 const safe=(a:any)=>{const {passwordHash,sessionId,...publicData}=a;return publicData};
 export async function adminRequest(app:any,request:Request,env:any,body:ArrayBuffer):Promise<Response|null>{
