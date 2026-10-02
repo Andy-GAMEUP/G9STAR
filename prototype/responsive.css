@@ -1,0 +1,41 @@
+/* Storefront layout corrections; keep overflow inside the responsible component. */
+.storefront :where(main,section,article,form,.product-main-col,.product-buy,.flow-card,.summary-card,.space-products){min-width:0}
+.storefront :where(.breadcrumbs,.page-subtitle,.validation,.result-panel,.estimate-result,.rd-spec,.rd-guide,.coupon-card p,.coupon-card small,.member-auth-form p){overflow-wrap:anywhere}
+.storefront input[type="checkbox"]{width:18px;min-height:18px;padding:0;flex:0 0 18px}
+@media(max-width:800px){
+ .storefront .partner-bar{height:auto;min-height:72px;display:flex;flex-wrap:wrap;gap:0;padding:6px 16px}
+ .storefront .partner-bar>strong{flex:0 0 100%;font-size:10px;line-height:20px}
+ .storefront .partner-bar nav{display:flex;flex:1 1 100%;min-width:0;margin:0;gap:12px;justify-content:flex-end;align-items:center;flex-wrap:wrap}
+ .storefront .partner-bar nav a,.storefront .partner-bar nav button{min-height:44px;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap}
+ .storefront .partner-bar nav a:nth-child(-n+2){display:none}
+ .storefront .partner-bar nav .admin-console-icon{width:44px;padding:10px}
+ .storefront .site-header{gap:12px}
+ .storefront .site-header .brand{font-size:18px}
+ .storefront .menu{min-width:44px;min-height:44px;flex-shrink:0}
+ .storefront .site-header nav.open{max-height:calc(100dvh - 144px);overflow-y:auto;overscroll-behavior:contain;margin:0}
+ .storefront .site-header nav a{min-height:44px;display:flex;align-items:center}
+ .storefront :where(input:not([type="checkbox"]):not([type="radio"]),select,textarea){font-size:16px;max-width:100%;min-width:0}
+ .storefront :where(.compact-button,.button,.filters button,.rental-filters button,.admin-recovery-link){min-height:44px}
+ .storefront .password-visibility{width:44px;height:44px;right:2px}
+ .storefront .estimate-fields{grid-template-columns:minmax(0,1fr);padding:20px;gap:16px}
+ .storefront .check-row{align-items:flex-start;line-height:1.7}
+ .storefront .check-row input{margin-top:4px}
+ .storefront .buy-actions{display:flex;flex-wrap:wrap;gap:10px}
+ .storefront .buy-actions>*{flex:1 1 130px;min-width:0;white-space:normal;text-align:center}
+ .storefront .thumbs{max-width:100%;overflow-x:auto}
+ .storefront .thumbs>*{flex-shrink:0}
+ .storefront .selection-card{min-width:0}
+ .storefront .selection-card>*{min-width:0;overflow-wrap:anywhere}
+}
+@media(max-width:560px){
+ .storefront .coupon-card{flex-wrap:wrap;gap:12px;padding:20px}
+ .storefront .coupon-card>div{min-width:0;flex:1 1 100%}
+ .storefront .coupon-card>b{white-space:normal;overflow-wrap:anywhere;font-size:20px}
+ .storefront .section-title{flex-wrap:wrap;gap:8px}
+ .storefront .space-products>button{flex-wrap:wrap;gap:8px;padding:14px}
+ .storefront .space-products>button b{white-space:normal}
+ .storefront .figma-title .filters{max-width:100%;padding-bottom:4px}
+ .storefront .member-auth-form .member-consent{font-size:12px}
+ .storefront .flow-card{padding:20px}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.storefront *{transition:none!important}}
