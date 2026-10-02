@@ -1,6 +1,7 @@
 import {Readable} from 'node:stream';
 import {DomainError} from '../backend/src/domain.ts';
 import {database,loadApplication,saveApplication} from './state.ts';
+import {adminRequest} from './admin-accounts.ts';
 import {sendQuote} from './email.ts';
 const error=(code:string,message:string,status=503,details?:unknown)=>Response.json({error:{code,message,...(details?{details}:{})}},{status,headers:{'cache-control':'no-store'}});
 async function invoke(app:any,request:Request,body:ArrayBuffer){
@@ -43,7 +44,7 @@ export default{
    if(url.pathname==='/api/health'){await db.query('SELECT 1 AS ok');return Response.json({status:'ok',service:'g9star-beta',database:'postgresql',databaseHealthy:true},{headers:{'cache-control':'no-store'}})}
    const body=await request.arrayBuffer();if(body.byteLength>bodyLimit)return error('PAYLOAD_TOO_LARGE','요청이 너무 큽니다.',413);
    for(let attempt=0;attempt<8;attempt++){
-    const {app,version}=await loadApplication(db,env);const response=await invoke(app,request,body);if(!response.ok)return response;
+    const {app,version}=await loadApplication(db,env);const response=await adminRequest(app,request,env,body)||await invoke(app,request,body);response.headers.set('cache-control','no-store');if(!response.ok)return response;
     if(request.method==='GET'||request.method==='OPTIONS'||await saveApplication(db,app,version)){
      if(url.pathname==='/api/v1/estimates'&&request.method==='POST')ctx.waitUntil(flushMail(env));return response;
     }
