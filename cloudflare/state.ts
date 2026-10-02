@@ -12,7 +12,7 @@ export function database(env:any):SqlDatabase{
 export async function loadApplication(db:SqlDatabase,env:any){
  const [row]=await db.query('SELECT version,payload FROM beta_state WHERE id=1');
  const app=await createApplication({database:new MemoryDatabase(),snapshot:row?row.payload:null,storage:env.UPLOADS?new R2AssetStorage(env.UPLOADS):undefined,uploads:!!env.UPLOADS,payments:false,devTokens:false,adminLogin:env.ADMIN_LOGIN,adminPassword:env.ADMIN_PASSWORD});
- const adminAccounts=row?.payload?.adminAccounts||[];const snapshot=app.snapshot;Object.assign(app,{adminAccounts,snapshot:()=>({...snapshot(),adminAccounts})});
+ const adminAccounts=row?.payload?.adminAccounts||[];const memberAccounts=row?.payload?.memberAccounts||[],memberPending=row?.payload?.memberPending||[];const snapshot=app.snapshot;Object.assign(app,{adminAccounts,memberAccounts,memberPending,snapshot:()=>({...snapshot(),adminAccounts,memberAccounts,memberPending})});
  return{app,version:row?Number(row.version):null};
 }
 export async function saveApplication(db:SqlDatabase,app:any,version:number|null){

@@ -17,16 +17,24 @@
 (function(){
  if(document.body.classList.contains('admin-body'))return;
  const nav=document.querySelector('.partner-bar nav[aria-label="사용자 메뉴"]');if(!nav)return;
- const login=nav.querySelector('a[href="signup.html"]');let consoleLink=null,logout=null,checking=false;
+ const login=nav.querySelector('a[href="login.html"]');let consoleLink=null,logout=null,checking=false;
  function clear(){consoleLink?.remove();logout?.remove();consoleLink=logout=null;if(login)login.hidden=false;}
- async function refreshAdminReturn(){if(checking)return;checking=true;try{let session;try{session=JSON.parse(sessionStorage.getItem('g9star-admin-session')||'null')}catch{}if(!session?.accessToken){clear();return;}
+ async function refreshMember(){
+  let state;try{state=JSON.parse(localStorage.getItem('earthplayground-portal-v2')||'{}')}catch{}if(!state?.token){clear();return;}
+  const response=await fetch(window.G9STAR.apiBase+'/v1/member-auth/session',{headers:{authorization:'Bearer '+state.token},cache:'no-store'});if(!response.ok){clear();if(response.status===401)localStorage.removeItem('earthplayground-portal-v2');return;}
+  const account=await response.json();if(login)login.hidden=true;consoleLink?.remove();consoleLink=null;
+  if(!logout){logout=document.createElement('button');logout.type='button';logout.className='admin-front-logout';logout.textContent='로그아웃';nav.append(logout);}
+  logout.onclick=async()=>{logout.disabled=true;try{const result=await fetch(window.G9STAR.apiBase+'/v1/member-auth/logout',{method:'POST',headers:{authorization:'Bearer '+state.token,'content-type':'application/json'},body:'{}'});if(!result.ok&&result.status!==401)throw Error('로그아웃하지 못했습니다. 다시 시도하세요.');localStorage.removeItem('earthplayground-portal-v2');clear();location.href='/';}catch(error){alert(error.message);if(logout)logout.disabled=false;}};
+  if(account.mustChangePassword&&!document.querySelector('#memberPasswordForm'))location.href='/login';
+ }
+ async function refreshAdminReturn(){if(checking)return;checking=true;try{let session;try{session=JSON.parse(sessionStorage.getItem('g9star-admin-session')||'null')}catch{}if(!session?.accessToken){clear();await refreshMember();return;}
   const response=await fetch(window.G9STAR.apiBase+'/v1/admin/session',{headers:{authorization:'Bearer '+session.accessToken},cache:'no-store'});
-  if(!response.ok){clear();if(response.status===401)sessionStorage.removeItem('g9star-admin-session');return;}
+  if(!response.ok){clear();if(response.status===401){sessionStorage.removeItem('g9star-admin-session');await refreshMember();}return;}
   if(login)login.hidden=true;
   if(!consoleLink){consoleLink=document.createElement('a');consoleLink.id='adminReturnLink';consoleLink.className='admin-console-icon';consoleLink.setAttribute('aria-label','백오피스 콘솔로 이동');consoleLink.title='백오피스 콘솔로 이동';consoleLink.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 9v12M13 13h4M13 17h4"/></svg>';nav.append(consoleLink);
    logout=document.createElement('button');logout.type='button';logout.className='admin-front-logout';logout.textContent='로그아웃';logout.onclick=async()=>{logout.disabled=true;try{const result=await fetch(window.G9STAR.apiBase+'/v1/admin/logout',{method:'POST',headers:{authorization:'Bearer '+session.accessToken,'content-type':'application/json'},body:'{}'});if(!result.ok&&result.status!==401)throw Error('로그아웃하지 못했습니다. 다시 시도해 주세요.');sessionStorage.removeItem('g9star-admin-session');clear();}catch(error){alert(error.message);if(logout)logout.disabled=false;}};nav.append(logout);
   }
   consoleLink.href='/admin?page='+encodeURIComponent(sessionStorage.getItem('g9star-admin-return-page')||'dashboard');
  }catch{clear();}finally{checking=false;}}
- refreshAdminReturn();window.addEventListener('focus',refreshAdminReturn);window.addEventListener('pageshow',refreshAdminReturn);setInterval(refreshAdminReturn,15000);
+ refreshAdminReturn();window.addEventListener('focus',refreshAdminReturn);window.addEventListener('pageshow',refreshAdminReturn);window.addEventListener('storage',refreshAdminReturn);window.addEventListener('g9star-member-session',refreshAdminReturn);setInterval(refreshAdminReturn,15000);
 })();
