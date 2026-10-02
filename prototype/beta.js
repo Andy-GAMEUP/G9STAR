@@ -14,3 +14,14 @@
   container.replaceChildren();return new Promise((resolve,reject)=>{window.turnstile.render(container,{sitekey:config.turnstileSiteKey,callback:resolve,'error-callback':()=>reject(Error('보안 확인을 다시 시도해 주세요.')),'expired-callback':()=>reject(Error('보안 확인이 만료됐습니다. 다시 시도해 주세요.'))})});
  };
 })();
+(function(){
+ if(document.body.classList.contains('admin-body'))return;
+ let link=null;
+ async function refreshAdminReturn(){let session;try{session=JSON.parse(sessionStorage.getItem('g9star-admin-session')||'null')}catch{}if(!session?.accessToken){link?.remove();link=null;return;}
+  try{const response=await fetch(window.G9STAR.apiBase+'/v1/admin/session',{headers:{authorization:'Bearer '+session.accessToken},cache:'no-store'});if(!response.ok){link?.remove();link=null;if(response.status===401)sessionStorage.removeItem('g9star-admin-session');return;}
+   if(!link){link=document.createElement('a');link.id='adminReturnLink';link.textContent='관리자 콘솔로 돌아가기';link.style.cssText='position:fixed;right:16px;bottom:16px;z-index:50;padding:12px 18px;background:#23231f;color:#fff;border:1px solid #fff;border-radius:10px;font-size:13px;font-weight:700;box-shadow:0 4px 16px #0003;max-width:calc(100vw - 32px)';document.body.append(link);}
+   link.href='/admin?page='+encodeURIComponent(sessionStorage.getItem('g9star-admin-return-page')||'dashboard');
+  }catch{}
+ }
+ refreshAdminReturn();window.addEventListener('focus',refreshAdminReturn);window.addEventListener('pageshow',refreshAdminReturn);
+})();
