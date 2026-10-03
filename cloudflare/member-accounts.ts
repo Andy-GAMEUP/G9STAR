@@ -23,11 +23,11 @@ export async function memberRequest(app:any,request:Request,env:any,body:ArrayBu
   const i=input(),address=email(i.email),account=accounts.find((a:any)=>a.email===address);
   if(path.endsWith('/send-verification')){
    if(account)fail('이미 가입된 이메일입니다. 로그인 또는 비밀번호 찾기를 이용하세요.',409,'EMAIL_EXISTS');
-   if(!await admit(ctx,'member-verify:'+digest(address)))return Response.json({ok:true,message:'최근 발송된 인증번호를 확인하세요. 재발송은 1분 간격, 시간당 최대 3회입니다.'});
+   if(!await admit(ctx,'member-verify:'+digest(address)))return Response.json({ok:true,sent:false,message:'최근 발송된 인증번호를 확인하세요. 재발송은 1분 간격, 시간당 최대 3회입니다.'});
    if(!ctx.mail)ctx.mail={id:crypto.randomUUID(),code:String(crypto.getRandomValues(new Uint32Array(1))[0]%1000000).padStart(6,'0'),expiresAt:Date.now()+600000};
    if(!ctx.sent){await sendMemberMail(env,address,'이메일 인증번호',`인증번호: ${ctx.mail.code}\n10분 안에 회원가입 화면에 입력하세요.`,ctx.mail.id);ctx.sent=true;}
    for(let n=pending.length-1;n>=0;n--)if(pending[n].email===address||pending[n].expiresAt<Date.now())pending.splice(n,1);
-   pending.push({email:address,id:ctx.mail.id,codeHash:digest(ctx.mail.code),expiresAt:ctx.mail.expiresAt});return Response.json({ok:true,message:'인증번호를 발송했습니다. 10분 안에 입력하세요.'});
+   pending.push({email:address,id:ctx.mail.id,codeHash:digest(ctx.mail.code),expiresAt:ctx.mail.expiresAt});return Response.json({ok:true,sent:true,message:'인증번호를 발송했습니다. 10분 안에 입력하세요.'});
   }
   if(path.endsWith('/verify-email')){
    const row=pending.find((a:any)=>a.email===address);if(!row||row.expiresAt<Date.now()||row.verified)fail('인증번호가 만료되었거나 이미 사용되었습니다. 다시 발송하세요.');
