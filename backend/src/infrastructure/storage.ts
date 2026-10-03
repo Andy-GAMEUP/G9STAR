@@ -18,6 +18,15 @@ const matchesMagic=(buffer:Buffer,contentType:string)=>{
  return false;
 };
 
+export function validateImage(buffer:Buffer,contentType:string){
+  const type=(contentType||'').split(';')[0].trim().toLowerCase(),ext=ALLOWED[type];
+  if(!ext)throw new DomainError('UNSUPPORTED_MEDIA_TYPE',`지원하지 않는 이미지 형식입니다: ${type||'unknown'}`,415,{allowed:Object.keys(ALLOWED)});
+  if(!buffer.length)throw new DomainError('EMPTY_UPLOAD','업로드된 파일이 비어 있습니다.',422);
+  if(buffer.length>MAX_BYTES)throw new DomainError('PAYLOAD_TOO_LARGE',`이미지는 ${Math.floor(MAX_BYTES/1024/1024)}MB 이하여야 합니다.`,413,{maxBytes:MAX_BYTES});
+  if(!matchesMagic(buffer,type))throw new DomainError('INVALID_IMAGE','이미지 내용이 선언한 형식과 일치하지 않습니다.',422,{contentType:type});
+return{type,ext};
+}
+
 export interface StoredAsset{filename:string;url:string;size:number;contentType:string}
 
 // 로컬/자체 스토리지 구현. 정식 퍼블리싱 시 서버 스토리지(오브젝트 스토리지/Strapi)로 교체 예정.
@@ -27,11 +36,7 @@ export class LocalAssetStorage{
  constructor(dir=process.env.ASSET_STORAGE_DIR||join(process.cwd(),'uploads')){this.dir=dir}
  async ensure(){if(!existsSync(this.dir))await mkdir(this.dir,{recursive:true})}
  async save(buffer:Buffer,contentType:string):Promise<StoredAsset>{
-  const type=(contentType||'').split(';')[0].trim().toLowerCase(),ext=ALLOWED[type];
-  if(!ext)throw new DomainError('UNSUPPORTED_MEDIA_TYPE',`지원하지 않는 이미지 형식입니다: ${type||'unknown'}`,415,{allowed:Object.keys(ALLOWED)});
-  if(!buffer.length)throw new DomainError('EMPTY_UPLOAD','업로드된 파일이 비어 있습니다.',422);
-  if(buffer.length>MAX_BYTES)throw new DomainError('PAYLOAD_TOO_LARGE',`이미지는 ${Math.floor(MAX_BYTES/1024/1024)}MB 이하여야 합니다.`,413,{maxBytes:MAX_BYTES});
-  if(!matchesMagic(buffer,type))throw new DomainError('INVALID_IMAGE','이미지 내용이 선언한 형식과 일치하지 않습니다.',422,{contentType:type});
+  const {type,ext}=validateImage(buffer,contentType);
   await this.ensure();
   const filename=`${Date.now()}-${randomUUID().slice(0,8)}${ext}`;
   await writeFile(join(this.dir,filename),buffer);

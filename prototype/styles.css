@@ -396,3 +396,27 @@
 .storefront .site-header nav a:hover{color:var(--accent)}
 .storefront .site-header nav a[aria-current="page"]{color:var(--accent);font-weight:800}
 .storefront .site-header nav a[aria-current="page"]::after{content:"";position:absolute;left:0;right:0;bottom:-3px;height:2px;border-radius:2px;background:var(--accent)}
+
+/* Public beta: preserve grid shrinkage and readable mobile controls. */
+[hidden]{display:none!important}
+.product-layout,.product-main-col,.product-gallery,.product-buy,.category-nav{min-width:0}
+.category-nav{max-width:100%;overflow-wrap:anywhere}
+.flow-card label{display:block;margin-bottom:1rem}
+.flow-card input{max-width:100%;width:100%;font:inherit;padding:.75rem}
+#adminLoginPanel{max-width:520px;margin:3rem auto;padding:1rem}
+@media(max-width:560px){
+ .product-layout{grid-template-columns:minmax(0,1fr)}
+ .detail-grid{grid-template-columns:minmax(0,1fr)}
+ .category-nav .cat-tree{max-width:100%;overflow-x:auto}
+ .buy-actions{flex-wrap:wrap}
+ .estimate-fields input,.estimate-fields textarea,.estimate-fields select{font-size:16px;min-width:0;max-width:100%}
+ .check-row{align-items:flex-start;line-height:1.6}
+ .check-row input[type=checkbox]{flex:0 0 auto;margin-top:.3rem}
+ .admin-header{flex-wrap:wrap;height:auto;min-height:64px;gap:.5rem;padding:.75rem}
+}
+/* Compact administrator credentials */
+.password-input-wrap{position:relative;display:block;width:100%;min-width:0}.password-input-wrap input{width:100%;padding-right:46px!important;box-sizing:border-box}.password-visibility{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:36px;height:36px;padding:7px;background:transparent;border:0;border-radius:6px;color:#65706a;cursor:pointer}.password-visibility:hover{background:#edf1ef}.password-visibility:focus-visible{outline:2px solid #397354;outline-offset:1px}.password-visibility svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.credential-dialog{width:420px;max-width:calc(100vw - 32px);box-sizing:border-box;padding:24px}.credential-form{display:flex!important;flex-direction:column;gap:16px}.credential-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.credential-heading h2{margin:0;font-size:19px}.credential-close{width:32px;height:32px;padding:0;border:0;background:transparent;color:#68726c;font-size:26px;cursor:pointer}.credential-form label{display:flex;flex-direction:column;gap:7px;font-size:12px;font-weight:600}.credential-form input,.credential-form select{box-sizing:border-box;width:100%;min-height:44px;padding:10px 12px;border:1px solid #cdd5d0;border-radius:7px;background:white;font:inherit}.credential-form>.primary{width:100%;min-height:44px}.credential-hint{font-size:11px;line-height:1.6;color:#68726c}.credential-form p:empty{display:none}.credential-form p{margin:0;font-size:12px;line-height:1.6}.admin-recovery-link{padding:8px;border:0;background:transparent;color:#52645a;font-size:12px;text-decoration:underline;cursor:pointer}
+
+.partner-bar nav .admin-console-icon{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;padding:2px}.partner-bar nav .admin-console-icon svg{display:block}.partner-bar nav .admin-front-logout{font:inherit;color:inherit;background:transparent;border:0;padding:0;cursor:pointer;white-space:nowrap}.partner-bar nav a[hidden]{display:none!important}.partner-bar nav .admin-console-icon:focus-visible,.admin-front-logout:focus-visible{outline:2px solid currentColor;outline-offset:3px}
+
+.member-auth-shell{max-width:520px}.member-auth-form{display:flex;flex-direction:column;gap:16px}.member-auth-form[hidden]{display:none!important}.member-auth-form label{display:flex;flex-direction:column;gap:8px;font-size:13px;font-weight:600}.member-auth-form input{box-sizing:border-box;width:100%;min-height:44px;padding:10px 12px;border:1px solid #d6d6d0;border-radius:7px;font:inherit}.member-auth-form .member-consent{flex-direction:row;align-items:flex-start;line-height:1.6}.member-auth-form .member-consent input{width:18px;min-height:18px;flex-shrink:0;margin:2px 0 0}.member-auth-form p{margin:0;font-size:13px;line-height:1.6}.member-auth-form small{color:#686861}.member-auth-form a{text-align:center;text-decoration:underline}.member-auth-form .password-input-wrap{width:100%}

@@ -6,7 +6,7 @@ const showcaseConfigs={
  retail:{title:'망원 라이프스타일 숍',breadcrumb:'리테일 › Curated Minimal › 망원동 20평',subtitle:'리테일 · 20평 · Curated Minimal · 사용제품 14개',image:'assets/retail-showcase.png',products:[['모듈 디스플레이 테이블 D-510','620,000원'],['블랙 행거 시스템 H-210','390,000원'],['오크 월 선반 S-520','480,000원'],['트랙 스포트 조명 L-510','89,000원'],['카운터 데스크 T-540','1,180,000원']]},
  office:{title:'성수 크리에이티브 오피스',breadcrumb:'오피스 › Warm Workscape › 성수동 28평',subtitle:'오피스 · 28평 · Warm Workscape · 사용제품 18개',image:'assets/office-showcase.png',products:[['10인 워크 테이블 T-710','2,800,000원'],['메시 태스크 체어 C-720','280,000원'],['어쿠스틱 펜던트 L-710','240,000원'],['모듈 스토리지 S-730','920,000원'],['라운지 소파 B-710','1,480,000원']]}
 };
-const API=(localStorage.getItem('earthplayground-api')||'http://127.0.0.1:4100').replace(/\/$/,'');
+const API=(window.G9STAR.apiBase).replace(/\/$/,'');
 const params=new URLSearchParams(location.search),apiId=params.get('id');
 const imgSrc=u=>!u?'':(/^https?:\/\//.test(u)?u:(u.startsWith('/uploads/')?API+u:u));
 const wonText=n=>n==null?'견적 상품':'₩'+Number(n).toLocaleString('ko-KR');
@@ -18,18 +18,14 @@ const showcasePhoto=document.querySelector('.showcase-photo');
 const productBuy=document.querySelector('.product-buy');
 
 // ------- 장바구니/관심공간 공통 -------
-const readCart=()=>{try{return JSON.parse(localStorage.getItem('earthplayground-cart')||'[]')}catch{return[]}};
-const addToCart=(name,price,space)=>{const cart=readCart(),item=cart.find(e=>e.name===name);if(item)item.quantity+=1;else cart.push({name,price,quantity:1,space});localStorage.setItem('earthplayground-cart',JSON.stringify(cart));return cart.reduce((s,e)=>s+e.quantity,0)};
-
 // ------- 상품 상세: 선택 카드 갱신 -------
 const applySelection=(name,price,productId)=>{const card=document.querySelector('.selection-card');if(!card)return;card.querySelector('strong').textContent=name;card.querySelector('small').textContent=price;const link=card.querySelector('a.compact-button');if(link&&productId)link.setAttribute('href','product.html?id='+encodeURIComponent(productId))};
 
 function bindQuantity(){let quantity=1;document.querySelectorAll('[data-qty]').forEach(button=>button.addEventListener('click',()=>{quantity=Math.max(1,quantity+(button.dataset.qty==='plus'?1:-1));const q=document.querySelector('#qty');if(q)q.textContent=quantity}))}
 
 // ================= 쇼케이스 페이지 =================
-if(showcasePhoto){
- if(apiId){renderShowcaseFromApi(apiId)}else{renderShowcaseFromConfig()}
-}
+// Initialize after category and review data declarations.
+
 
 function renderShowcaseFromConfig(){
  const key=new URLSearchParams(location.search).get('space')||'cafe',config=showcaseConfigs[key]||showcaseConfigs.cafe,selection=document.querySelector('.selection-card');
@@ -62,22 +58,21 @@ async function renderShowcaseFromApi(id){
 }
 
 function bindFavorite(key,title,image){
- const favoriteKey='earthplayground-favorite-spaces',saveButton=document.querySelector('#saveShowcase');if(!saveButton)return;
- const readFavorites=()=>{try{return JSON.parse(localStorage.getItem(favoriteKey)||'[]')}catch{return[]}};
- const paint=()=>{const saved=readFavorites().some(item=>item.key===key);saveButton.setAttribute('aria-pressed',String(saved));saveButton.textContent=saved?'♥ 관심 공간 저장됨':'♡ 관심 공간 저장'};
- paint();
- saveButton.onclick=()=>{const favorites=readFavorites(),index=favorites.findIndex(item=>item.key===key);if(index>=0)favorites.splice(index,1);else favorites.unshift({key,title,image,savedAt:new Date().toISOString()});localStorage.setItem(favoriteKey,JSON.stringify(favorites));paint();showToast(index>=0?'관심 공간에서 삭제했습니다.':'관심 공간에 저장했습니다.')};
+ const button=document.querySelector('#saveShowcase');if(!button)return;const type=showcaseConfigs[key]?'space':'showcase';
+ const paint=items=>{const saved=items.some(r=>r.id===key&&r.type===type);button.setAttribute('aria-pressed',String(saved));button.textContent=saved?'♥ 관심 공간 저장됨':'♡ 관심 공간 저장';};
+ button.onclick=async()=>{if(!window.G9STAR.member.session().token){window.location.assign('/login');return;}button.disabled=true;try{const data=await window.G9STAR.member.request('favorites',{id:key,type,remove:button.getAttribute('aria-pressed')==='true'});paint(data.favorites);showToast('관심 공간을 저장했습니다.');}catch(e){showToast(e.message);}finally{button.disabled=false;}};
+ const hydrate=()=>{if(window.G9STAR.member?.session().token)window.G9STAR.member.request('profile').then(d=>paint(d.favorites)).catch(()=>{});};if(window.G9STAR.member)hydrate();else window.addEventListener('load',hydrate);
 }
 
 function bindShowcaseInteractions(){
  const cartButton=document.querySelector('#addHotspotCart');
- if(cartButton)cartButton.onclick=()=>{const card=document.querySelector('.selection-card'),name=card.querySelector('strong').textContent,price=card.querySelector('small').textContent,count=addToCart(name,price,apiId||'');cartButton.textContent=`장바구니 ${count}`;cartButton.classList.add('confirmed');showToast(`${name}을(를) 장바구니에 담았습니다.`)};
+ if(cartButton)cartButton.onclick=async()=>{if(!window.G9STAR.member.session().token){window.location.assign('/login');return;}const link=document.querySelector('.selection-card a.compact-button'),id=link?new URL(link.href).searchParams.get('id'):null;if(!id){showToast('상품 상세에서 장바구니에 담아 주세요.');return;}cartButton.disabled=true;try{await window.G9STAR.member.request('cart',{id,quantity:1,add:true});showToast('장바구니에 담았습니다.');}catch(e){showToast(e.message);}finally{cartButton.disabled=false;}};
  document.querySelectorAll('.scene-hotspot').forEach(point=>point.addEventListener('click',()=>{const card=document.querySelector('.selection-card');card.querySelector('strong').textContent=point.dataset.name;card.querySelector('small').textContent=point.dataset.price}));
  document.querySelectorAll('.thumb').forEach((thumb,index)=>thumb.addEventListener('click',()=>{document.querySelector('.thumb.active')?.classList.remove('active');thumb.classList.add('active');showcasePhoto.style.backgroundPosition=index===0?'center':index===1?'35% center':'70% center'}));
 }
 
 // ================= 상품 상세 페이지 =================
-if(productBuy&&apiId){renderProductFromApi(apiId)}else if(productBuy){bindQuantity();setActiveCategory('Chair')}else{bindQuantity()}
+// Product initialization is deferred to the end of this file.
 
 async function renderProductFromApi(id){
  try{
@@ -96,6 +91,10 @@ async function renderProductFromApi(id){
   bindQuantity();
   const grid=document.querySelector('.showcase-grid');
   if(grid)grid.innerHTML=(p.showcases||[]).map(s=>`<a class="space-card" href="showcase.html?id=${encodeURIComponent(s.id)}"><div class="space-image" style="background-image:url('${imgSrc(s.imageUrl)}');background-size:cover;background-position:center"></div><h3>${escapeHtml(s.title)}</h3><p>실제 배치 매장</p></a>`).join('')||'<p class="empty-state">아직 배치된 매장이 없습니다.</p>';
+  const cartButton=document.querySelector('#productCart'),favorite=document.querySelector('#productFavorite');
+  const act=async(button,task)=>{if(!window.G9STAR.member.session().token){window.location.assign('/login');return;}button.disabled=true;try{await task();}catch(e){showToast(e.message);}finally{button.disabled=false;}};
+  if(cartButton){cartButton.disabled=false;cartButton.onclick=()=>act(cartButton,async()=>{const options=document.querySelectorAll('.option-list select');await window.G9STAR.member.request('cart',{id:p.id,quantity:Number(document.querySelector('#qty').textContent),color:options[0]?.value,size:options[1]?.value,add:true});showToast('장바구니에 담았습니다. 마이페이지에서 확인하세요.');});}
+  if(favorite){favorite.disabled=false;favorite.onclick=()=>act(favorite,async()=>{const result=await window.G9STAR.member.request('favorites',{id:p.id,type:'product',remove:favorite.getAttribute('aria-pressed')==='true'});const saved=result.favorites.some(r=>r.id===p.id&&r.type==='product');favorite.setAttribute('aria-pressed',String(saved));favorite.textContent=saved?'♥ 상품 찜 저장됨':'♡ 상품 찜';});const hydrateProduct=()=>{if(window.G9STAR.member?.session().token)window.G9STAR.member.request('profile').then(d=>{const saved=d.favorites.some(r=>r.id===p.id&&r.type==='product');favorite.setAttribute('aria-pressed',String(saved));favorite.textContent=saved?'♥ 상품 찜 저장됨':'♡ 상품 찜';}).catch(()=>{});};if(window.G9STAR.member)hydrateProduct();else window.addEventListener('load',hydrateProduct);}
   applyProductSeo(p);
  }catch(e){document.querySelector('.product-buy h1').textContent='상품을 불러오지 못했습니다';const sku=document.querySelector('.sku');if(sku)sku.textContent=e.message}
 }
@@ -103,7 +102,7 @@ async function renderProductFromApi(id){
 // 상품 SEO 메타·구조화 데이터 동적 갱신
 function applyProductSeo(p){
  try{
-  const SITE='https://www.starplayground.com';
+  const SITE='https://g9star.co.kr';
   const url=SITE+'/product.html?id='+encodeURIComponent(p.id);
   const img=(p.images&&p.images[0])?imgSrc(p.images[0]):SITE+'/assets/wood-chair.png';
   const abs=/^https?:/.test(img)?img:SITE+'/'+String(img).replace(/^\//,'');
@@ -143,3 +142,6 @@ function initShowcaseExtras(id,title){renderReviews(id);bindReviews(id);bindShar
 async function renderSimilar(currentId){const section=document.querySelector('#similar'),grid=document.querySelector('#similarGrid');if(!section||!grid)return;try{const data=await fetchJson('/v1/showcases'),others=(data.items||[]).filter(s=>s.id!==currentId).slice(0,3);if(!others.length){section.hidden=true;return}grid.innerHTML=others.map(s=>`<a class="space-card" href="showcase.html?id=${encodeURIComponent(s.id)}"><div class="space-image" style="${s.imageUrl?`background-image:url('${imgSrc(s.imageUrl)}');background-size:cover;background-position:center`:''}"></div><h3>${escapeHtml(s.title)}</h3><p>유사 스타일 사례</p></a>`).join('');section.hidden=false}catch{section.hidden=true}}
 const CATEGORY_MAP={chair:'우드 체어','우드 체어':'우드 체어',table:'테이블','테이블':'테이블',light:'조명',lighting:'조명','조명':'조명',shelf:'수납/선반',display:'수납/선반',sofa:'소파',stool:'스툴'};
 function setActiveCategory(cat){const key=String(cat||'').toLowerCase(),target=CATEGORY_MAP[key]||cat;document.querySelectorAll('.category-nav [data-cat]').forEach(a=>{const on=a.dataset.cat===target||a.dataset.cat.toLowerCase()===key;a.classList.toggle('active',on);if(on)a.closest('.cat-group')?.classList.add('open')})}
+
+if(showcasePhoto){if(apiId){renderShowcaseFromApi(apiId)}else{renderShowcaseFromConfig()}}
+if(productBuy&&apiId){renderProductFromApi(apiId)}else if(productBuy){bindQuantity();setActiveCategory('Chair')}else{bindQuantity()}

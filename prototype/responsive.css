@@ -1,0 +1,63 @@
+/* Storefront layout corrections; keep overflow inside the responsible component. */
+.storefront :where(main,section,article,form,.product-main-col,.product-buy,.flow-card,.summary-card,.space-products){min-width:0}
+.storefront :where(.breadcrumbs,.page-subtitle,.validation,.result-panel,.estimate-result,.rd-spec,.rd-guide,.coupon-card p,.coupon-card small,.member-auth-form p){overflow-wrap:anywhere}
+.storefront input[type="checkbox"]{width:18px;min-height:18px;padding:0;flex:0 0 18px}
+@media(max-width:800px){
+ .storefront .partner-bar{height:auto;min-height:72px;display:flex;flex-wrap:wrap;gap:0;padding:6px 16px}
+ .storefront .partner-bar>strong{flex:0 0 100%;font-size:10px;line-height:20px}
+ .storefront .partner-bar nav{display:flex;flex:1 1 100%;min-width:0;margin:0;gap:12px;justify-content:flex-end;align-items:center;flex-wrap:wrap}
+ .storefront .partner-bar nav a,.storefront .partner-bar nav button{min-height:44px;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap}
+ .storefront .partner-bar nav a:nth-child(-n+2){display:none}
+ .storefront .partner-bar nav .admin-console-icon{width:44px;padding:10px}
+ .storefront .site-header{gap:12px}
+ .storefront .site-header .brand{font-size:18px}
+ .storefront .menu{min-width:44px;min-height:44px;flex-shrink:0}
+ .storefront .site-header nav.open{max-height:calc(100dvh - 144px);overflow-y:auto;overscroll-behavior:contain;margin:0}
+ .storefront .site-header nav a{min-height:44px;display:flex;align-items:center}
+ .storefront :where(input:not([type="checkbox"]):not([type="radio"]),select,textarea){font-size:16px;max-width:100%;min-width:0}
+ .storefront :where(.compact-button,.button,.filters button,.rental-filters button,.admin-recovery-link){min-height:44px}
+ .storefront .password-visibility{width:44px;height:44px;right:2px}
+ .storefront .estimate-fields{grid-template-columns:minmax(0,1fr);padding:20px;gap:16px}
+ .storefront .check-row{align-items:flex-start;line-height:1.7}
+ .storefront .check-row input{margin-top:4px}
+ .storefront .buy-actions{display:flex;flex-wrap:wrap;gap:10px}
+ .storefront .buy-actions>*{flex:1 1 130px;min-width:0;white-space:normal;text-align:center}
+ .storefront .thumbs{max-width:100%;overflow-x:auto}
+ .storefront .thumbs>*{flex-shrink:0}
+ .storefront .selection-card{min-width:0}
+ .storefront .selection-card>*{min-width:0;overflow-wrap:anywhere}
+}
+@media(max-width:560px){
+ .storefront .coupon-card{flex-wrap:wrap;gap:12px;padding:20px}
+ .storefront .coupon-card>div{min-width:0;flex:1 1 100%}
+ .storefront .coupon-card>b{white-space:normal;overflow-wrap:anywhere;font-size:20px}
+ .storefront .section-title{flex-wrap:wrap;gap:8px}
+ .storefront .space-products>button{flex-wrap:wrap;gap:8px;padding:14px}
+ .storefront .space-products>button b{white-space:normal}
+ .storefront .figma-title .filters{max-width:100%;padding-bottom:4px}
+ .storefront .member-auth-form .member-consent{font-size:12px}
+ .storefront .flow-card{padding:20px}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.storefront *{transition:none!important}}
+
+/* Main header account actions replace the former partner strip. */
+.storefront .site-header{gap:clamp(12px,2vw,32px)}
+.storefront .header-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;margin:0}
+.storefront .header-actions :where(.header-icon,.admin-console-icon,.admin-front-logout){display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;padding:10px;border:1px solid #e4e4de;border-radius:50%;background:white;color:#34342f;cursor:pointer;flex-shrink:0}
+.storefront .header-actions svg{display:block;width:20px;height:20px}
+.storefront .header-actions [hidden]{display:none!important}
+.storefront .header-actions:has(.admin-console-icon) .header-mypage{display:none}
+.storefront .header-actions .header-login,.storefront .header-actions .admin-front-logout{order:1}
+.storefront .header-actions .header-mypage,.storefront .header-actions .admin-console-icon{order:2}
+.storefront .header-actions .header-notifications{order:3}
+.storefront .header-actions .admin-front-logout{font-size:0}
+.storefront .header-actions .admin-front-logout:before{content:'';width:20px;height:20px;background:currentColor;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 3H5v18h5M10 12h11M16 7l5 5-5 5'/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat}
+.storefront .header-actions :where(a,button):hover{background:#f5f5f2;color:var(--accent)}
+.storefront .header-actions :where(a,button):focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media(min-width:801px) and (max-width:1100px){.storefront .site-header{padding-inline:20px;gap:12px}.storefront .site-header #nav{gap:14px;font-size:13px}.storefront .header-cta{display:none}.storefront .site-header .brand{font-size:18px}}
+@media(max-width:800px){.storefront .site-header{height:auto;min-height:64px;flex-wrap:wrap;gap:8px;padding:10px 16px}.storefront .site-header .brand{margin-right:auto}.storefront .site-header .menu{margin-left:0;order:3}.storefront .header-actions{order:2}.storefront .site-header #nav{top:100%;max-height:calc(100dvh - 120px)} }
+@media(max-width:400px){.storefront .site-header .brand{font-size:16px}.storefront .header-actions{gap:2px}.storefront .site-header{column-gap:4px}.storefront .site-header .menu{font-size:12px;padding-inline:3px}}
+@media(max-width:400px){.storefront .site-header .menu{order:1}.storefront .header-actions{flex-basis:100%;justify-content:flex-end}.storefront .header-actions .header-icon,.storefront .header-actions .admin-console-icon,.storefront .header-actions .admin-front-logout{flex:0 0 44px}}
+/* Member portal */
+.mypage-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:24px 0}.mypage-tabs a{padding:12px 16px;border:1px solid var(--line);border-radius:24px;background:white;font-size:14px}.mypage-tabs a[aria-current="page"]{background:var(--ink);color:white}.mypage-shell [hidden]{display:none!important}.mypage-list{display:grid;gap:12px;margin:20px 0}.mypage-item{display:flex;align-items:center;gap:16px;padding:18px;border:1px solid var(--line);border-radius:14px}.mypage-item>div{flex:1;min-width:0;overflow-wrap:anywhere}.mypage-item a{font-weight:700}.mypage-item p{color:var(--muted);font-size:13px}.mypage-item label{display:grid;gap:6px;font-size:12px}.mypage-item input{width:70px;padding:10px}.mypage-shell .inline-field{display:flex;flex-wrap:wrap;margin-bottom:24px}.mypage-shell .inline-field input{flex:1;min-width:140px}.mypage-shell .member-auth-form{max-width:600px}.mypage-tabs[hidden]{display:none!important}
+@media(max-width:600px){.mypage-item{flex-wrap:wrap;padding:14px}.mypage-item>div{flex:1 1 100%}.mypage-tabs a{padding:10px 12px}.mypage-shell .flow-card{padding:20px}.mypage-shell .coupon-list{margin-top:20px}}

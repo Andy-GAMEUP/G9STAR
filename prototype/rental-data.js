@@ -54,8 +54,10 @@
     return {id:r[0],cat:cat,name:r[2],spec:r[3],price:r[4],tag:m.tag,thumb:m.thumb,detail:DETAIL[cat]||[]};
   });
 
-  var BASE=(localStorage.getItem('earthplayground-api')||'http://127.0.0.1:4100').replace(/\/$/,'');
+  var BASE=window.G9STAR.apiBase.replace(/\/$/,'');
+  PRODUCTS=[];
   var API={
+    escape:function(value){return String(value==null?'':value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});},
     categories:['야외천막','부스','천막매대','테이블','의자','파라솔','포토월','단상'],
     all:function(){return PRODUCTS.slice();},
     byId:function(id){return PRODUCTS.filter(function(p){return p.id===id;})[0]||null;},
@@ -63,8 +65,8 @@
     price:function(n){return n.toLocaleString('ko-KR')+'원';},
     catMeta:function(cat){return CAT_META[cat];},
     fromApi:fromApi,
-    // 백엔드 카탈로그를 우선 로드(실패 시 로컬 시드 유지)
-    load:async function(){try{var r=await fetch(BASE+'/v1/rental-items');if(!r.ok)throw 0;var d=await r.json();if(d&&Array.isArray(d.items)&&d.items.length){PRODUCTS=d.items.map(fromApi);}}catch(e){}return PRODUCTS.slice();},
+    // 운영 카탈로그 조회; 실패와 빈 목록을 구분
+    load:async function(){API.error='';try{var r=await fetch(BASE+'/v1/rental-items');if(!r.ok)throw 0;var d=await r.json();if(!d||!Array.isArray(d.items))throw Error('INVALID_CATALOG');PRODUCTS=d.items.map(fromApi);}catch(e){PRODUCTS=[];API.error='렌탈 상품을 불러오지 못했습니다. 잠시 후 새로고침해 주세요.';}return PRODUCTS.slice();},
     loadOne:async function(id){try{var r=await fetch(BASE+'/v1/rental-items/'+encodeURIComponent(id));if(!r.ok)throw 0;var d=await r.json();var p=fromApi(d);p.related=(d.related||[]).map(fromApi);return p;}catch(e){return null;}}
   };
   window.RENTAL=API;

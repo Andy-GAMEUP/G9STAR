@@ -12,7 +12,7 @@ const token=async(role:string)=>(await (await j('/dev/token',{method:'POST',head
 
 before(async()=>{
  assetDir=await mkdtemp(join(tmpdir(),'ep-http-'));
- server=spawn(process.execPath,['--experimental-strip-types','src/server.ts'],{cwd:process.cwd(),env:{...process.env,PORT:String(PORT),ALLOW_DEV_TOKEN:'true',ASSET_STORAGE_DIR:assetDir},stdio:'ignore'});
+ server=spawn(process.execPath,['--experimental-strip-types','src/server.ts'],{cwd:process.cwd(),env:{...process.env,PORT:String(PORT),ALLOW_DEV_TOKEN:'true',PAYMENTS_ENABLED:'true',ASSET_STORAGE_DIR:assetDir},stdio:'ignore'});
  for(let i=0;i<60;i++){try{if((await j('/health')).ok)return}catch{}await new Promise(r=>setTimeout(r,100))}
  throw new Error('server did not start');
 });
