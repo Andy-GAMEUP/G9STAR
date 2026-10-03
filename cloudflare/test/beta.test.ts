@@ -18,6 +18,44 @@ async function fixtureSignup(env:any,name:string,address:string){
  for(let attempt=0;attempt<8;attempt++){const {app,version}=await loadApplication(env.TEST_DATABASE,env);(app as any).memberPending.push({email:address,id:address,verified:true,tokenHash:createHash('sha256').update(proof).digest('hex'),expiresAt:Date.now()+600000});if(await saveApplication(env.TEST_DATABASE,app,version))break;}
  return worker.fetch(request('/v1/members',{name,email:address,password:'Test123!',phone:'01012345678',directCode:'RS-A001-KIM',privacyConsent:true,termsConsent:true,verificationToken:proof}),env,context);
 }
+test('회원·관리자 로그인 실패 원인을 개인정보 없이 구분하고 정상 비밀번호 재로그인을 유지한다',async()=>{
+ const db=await new Postgres().ready(),env=createEnv(db),originalWarn=console.warn,logs:any[]=[];
+ console.warn=(...args:any[])=>{logs.push(args)};
+ const call=(p:string,b:any)=>worker.fetch(request(p,b),env,context);
+ try{
+  assert.equal((await fixtureSignup(env,'검증회원','diagnostic@example.com')).status,201);
+  for(const credentials of [
+   {path:'/v1/admin/login',valid:{login:env.ADMIN_LOGIN,password:env.ADMIN_PASSWORD}},
+   {path:'/v1/member-auth/login',valid:{email:'diagnostic@example.com',password:'Test123!'}}
+  ]){
+   assert.equal((await call(credentials.path,credentials.valid)).status,200);
+   assert.equal((await call(credentials.path,credentials.valid)).status,200);
+   const wrong=await call(credentials.path,{...credentials.valid,password:'NeverLogThis123!'});assert.equal(wrong.status,401);assert.equal((await wrong.json()).error.code,'INVALID_CREDENTIALS');
+   const absent=await call(credentials.path,{...credentials.valid,email:'absent@example.com',login:'absent@example.com'});assert.equal(absent.status,401);assert.equal((await absent.json()).error.code,'INVALID_CREDENTIALS');
+  }
+  assert.deepEqual(logs.map(x=>x[1]),[
+   {accountType:'admin',reason:'password_mismatch',storedAccounts:1},
+   {accountType:'admin',reason:'account_not_found',storedAccounts:1},
+   {accountType:'member',reason:'password_mismatch',storedAccounts:1},
+   {accountType:'member',reason:'account_not_found',storedAccounts:1}
+  ]);
+  const serialized=JSON.stringify(logs);for(const secret of [env.ADMIN_LOGIN,env.ADMIN_PASSWORD,'diagnostic@example.com','Test123!','NeverLogThis123!','absent@example.com'])assert.equal(serialized.includes(secret),false);
+ }finally{console.warn=originalWarn;await db.close()}
+});
+test('기한을 지정한 테스트 관리자는 만료 후 로그인과 기존 세션 접근이 모두 종료된다',async()=>{
+ const db=await new Postgres().ready(),env=createEnv(db);
+ const call=(p:string,b?:any,t?:string)=>worker.fetch(request('/v1/admin'+p,b,t),env,context);
+ try{
+  const master:any=await(await call('/login',{login:env.ADMIN_LOGIN,password:env.ADMIN_PASSWORD})).json();
+  const created:any=await(await call('/ops/admins',{name:'테스트 관리자',email:'temporary@example.com',role:'OPERATOR',password:'Temp123!'},master.accessToken)).json();
+  let current=await loadApplication(db,env);(current.app as any).adminAccounts.find((a:any)=>a.id===created.id).expiresAt=Date.now()+86400000;assert.equal(await saveApplication(db,current.app,current.version),true);
+  const login=await call('/login',{login:created.email,password:'Temp123!'});assert.equal(login.status,200);const session:any=await login.json();assert.equal((await call('/ops/dashboard',undefined,session.accessToken)).status,200);
+  assert.equal((await call('/ops/admins',undefined,session.accessToken)).status,403);
+  current=await loadApplication(db,env);(current.app as any).adminAccounts.find((a:any)=>a.id===created.id).expiresAt=Date.now()-1;assert.equal(await saveApplication(db,current.app,current.version),true);
+  assert.equal((await call('/login',{login:created.email,password:'Temp123!'})).status,401);assert.equal((await call('/session',undefined,session.accessToken)).status,401);assert.equal((await call('/ops/dashboard',undefined,session.accessToken)).status,401);
+  assert.equal((await call('/session',undefined,master.accessToken)).status,200);
+ }finally{await db.close()}
+});
 test('저장소를 다시 열어도 회원·쿠폰·견적과 관리자 변경값이 유지된다',async()=>{
  const dir=mkdtempSync(join(tmpdir(),'g9star-pg-')),path=join(dir,'postgres');let db=await new Postgres(path).ready(),env=createEnv(db);
  try{
@@ -131,7 +169,7 @@ test('이메일 임시 비밀번호는 일회용이며 변경 전 업무 접근�
  const login=await call('/login',{login:env.ADMIN_LOGIN,password:temporary});assert.equal(login.status,200);const recovered:any=await login.json();assert.equal(recovered.mustChangePassword,true);
  assert.equal((await call('/session',undefined,old)).status,401);assert.equal((await call('/ops/dashboard',undefined,recovered.accessToken)).status,403);
  const session:any=await (await call('/session',undefined,recovered.accessToken)).json();assert.equal(session.mustChangePassword,true);assert.equal('recovery' in session,false);assert.equal('passwordHash' in session,false);
- assert.equal((await call('/login',{login:env.ADMIN_LOGIN,password:temporary})).status,401);assert.equal((await call('/login',{login:env.ADMIN_LOGIN,password:env.ADMIN_PASSWORD})).status,401);
+ const reused=await call('/login',{login:env.ADMIN_LOGIN,password:temporary});assert.equal(reused.status,401);assert.equal((await reused.json()).error.code,'TEMPORARY_PASSWORD_USED');assert.equal((await call('/login',{login:env.ADMIN_LOGIN,password:env.ADMIN_PASSWORD})).status,401);
  assert.equal((await call('/password',{currentPassword:temporary,newPassword:'Fresh12!'},recovered.accessToken)).status,200);
  assert.equal((await call('/session',undefined,recovered.accessToken)).status,401);const next=await call('/login',{login:env.ADMIN_LOGIN,password:'Fresh12!'});assert.equal(next.status,200);assert.equal((await next.json()).mustChangePassword,false);
  assert.equal((await call('/login',{login:env.ADMIN_LOGIN,password:temporary})).status,401);
@@ -178,7 +216,7 @@ test('회원 이메일 인증·가입·로그인·임시 비밀번호·영속성
   assert.equal((await call('/v1/member-auth/password-recovery',{email:address})).status,200);const temporary=mails[1].text.match(/임시 비밀번호: (\S+)/)[1];
   assert.equal((await call('/v1/member-auth/session',undefined,auth.accessToken)).status,200);
   const recovered:any=await(await call('/v1/member-auth/login',{email:address,password:temporary})).json();assert.equal(recovered.mustChangePassword,true);
-  assert.equal((await call('/v1/member-auth/login',{email:address,password:temporary})).status,401);
+  const reused=await call('/v1/member-auth/login',{email:address,password:temporary});assert.equal(reused.status,401);assert.equal((await reused.json()).error.code,'TEMPORARY_PASSWORD_USED');
   assert.equal((await call('/v1/me',undefined,recovered.accessToken)).status,403);
   assert.equal((await call('/v1/member-auth/session',undefined,auth.accessToken)).status,401);
   assert.equal((await call('/v1/member-auth/password',{currentPassword:temporary,newPassword:'Fresh123!'},recovered.accessToken)).status,200);

@@ -3,6 +3,7 @@ import {DomainError} from '../backend/src/domain.ts';
 import {authenticate,issueToken} from '../backend/src/infrastructure/auth.ts';
 import {memberPortal} from './member-portal.ts';
 import {sendMemberMail} from './email.ts';
+import {rejectLogin} from './auth-failure.ts';
 const fail=(message:string,status=422,code='VALIDATION_ERROR'):never=>{throw new DomainError(code,message,status)};
 const digest=(s:string)=>createHash('sha256').update(s).digest('hex');
 const hash=async(p:string,salt=randomBytes(16).toString('hex'))=>{const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(p),'PBKDF2',false,['deriveBits']);return salt+':'+Buffer.from(await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(salt),iterations:100000,hash:'SHA-256'},key,256)).toString('hex')};
@@ -42,10 +43,14 @@ export async function memberRequest(app:any,request:Request,env:any,body:ArrayBu
    if(!ctx.sent){await sendMemberMail(env,address,'회원 임시 비밀번호',`임시 비밀번호: ${ctx.mail.password}\n15분 이내 https://www.g9star.co.kr/login 에서 로그인한 뒤 새 비밀번호로 변경하세요. 한 번만 사용할 수 있습니다. 직접 요청하지 않았다면 무시하세요. 기존 비밀번호는 임시 비밀번호를 사용하기 전까지 유지됩니다.`,ctx.mail.id);ctx.sent=true;}
    account.recovery={passwordHash:await hash(ctx.mail.password),expiresAt:ctx.mail.expiresAt};return generic();
   }
-  const p=typeof i.password==='string'?i.password:'';if(!account||!p||p.length>200)fail('이메일 또는 비밀번호를 확인하세요.',401,'INVALID_CREDENTIALS');
+  const rejected=(reason:string,message='이메일 또는 비밀번호를 확인하세요.',code='INVALID_CREDENTIALS')=>rejectLogin('member',reason,accounts.length,message,code);
+  const p=typeof i.password==='string'?i.password:'';if(!p||p.length>200)rejected('invalid_password_input');if(!account)rejected('account_not_found');
   const recovered=account.recovery&&account.recovery.expiresAt>Date.now()&&await matches(p,account.recovery.passwordHash);
   if(recovered){account.passwordHash=account.recovery.passwordHash;account.mustChangePassword=true;account.temporaryPasswordExpiresAt=account.recovery.expiresAt;delete account.recovery;}
-  else if(account.mustChangePassword||!await matches(p,account.passwordHash))fail('이메일 또는 비밀번호를 확인하세요.',401,'INVALID_CREDENTIALS');
+  else {
+   if(!await matches(p,account.passwordHash))rejected('password_mismatch');
+   if(account.mustChangePassword)rejected('recovery_password_consumed','이미 사용한 임시 비밀번호입니다. 로그인된 화면에서 비밀번호를 변경하거나, 비밀번호 찾기로 새 임시 비밀번호를 발급받으세요.','TEMPORARY_PASSWORD_USED');
+  }
   if(app.backoffice.detail('members',account.memberId).status!=='ACTIVE')fail('사용할 수 없는 회원 계정입니다.',403);
   account.sessionId=crypto.randomUUID();return Response.json(await accountResponse(account));
  }

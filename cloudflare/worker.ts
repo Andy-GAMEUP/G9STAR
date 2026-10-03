@@ -42,7 +42,7 @@ export default{
     if(Number(request.headers.get('content-length')||0)>bodyLimit)return error('PAYLOAD_TOO_LARGE','요청이 너무 큽니다.',413);
     await protect(request,env,db);
    }
-   if(url.pathname==='/api/health'){await db.query('SELECT 1 AS ok');return Response.json({status:'ok',service:'g9star-beta',database:'postgresql',databaseHealthy:true},{headers:{'cache-control':'no-store'}})}
+   if(url.pathname==='/api/health'){await db.query('SELECT 1 AS ok');return Response.json({status:'ok',service:'g9star-beta',release:'auth-diagnostics-20261003-1',database:'postgresql',databaseHealthy:true},{headers:{'cache-control':'no-store'}})}
    const body=await request.arrayBuffer();if(body.byteLength>bodyLimit)return error('PAYLOAD_TOO_LARGE','요청이 너무 큽니다.',413);
    const recoveryContext={db};
    for(let attempt=0;attempt<8;attempt++){

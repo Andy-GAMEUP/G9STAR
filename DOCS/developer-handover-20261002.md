@@ -237,3 +237,11 @@ curl -fsS https://www.g9star.co.kr/api/health
 임시 비밀번호 로그인은 `/mypage?tab=password`로 이동한다. 새 비밀번호 설정 시 이전 토큰은 종료하고 새 토큰을 발급해 내 정보 화면을 이어서 사용한다. 일반 가입·로그인은 세션 저장 후 현재 도메인의 홈 문서를 전체 이동으로 불러온다. 이미 로그인한 상태에서 로그인 화면을 다시 열면 서버 세션 확인 후 홈(임시 세션은 비밀번호 화면)으로 이동한다. 이메일은 인증된 로그인 아이디로 표시하며 이름·휴대전화 변경을 지원한다.
 
 관리자 로그인은 `/api/v1/admin/session`으로 성공 응답의 토큰을 확인한 후 `sessionStorage`에 저장하고 `/admin?page=...`로 전체 이동한다. 단순 `location.reload()`를 사용하지 않는다.
+
+### 2026-10-03 로그인 실패 진단
+
+사용한 임시 비밀번호로 다시 로그인하면 `TEMPORARY_PASSWORD_USED`와 재발급 안내를 반환한다. 이미 발급된 제한 세션에서 비밀번호를 바꾸거나 새 임시 비밀번호를 요청해야 한다. 일반 비밀번호의 로그인, 임시 비밀번호의 일회 사용 및 변경 전 업무 접근 제한은 유지한다.
+
+Cloudflare Worker Logs의 `authentication_rejected`에는 `accountType`, `reason`, `storedAccounts`만 남긴다. `account_not_found`는 연결된 DB 스냅샷에서 계정을 찾지 못함, `password_mismatch`는 저장된 비밀번호와 불일치, `recovery_password_consumed`는 이미 사용한 임시 비밀번호, `inactive_account`는 관리자 비활성 상태다. 최초 관리자만 사용하는 환경변수 암호는 `bootstrap_password_mismatch`와 `bootstrap_password_not_configured`로 구분한다. 이메일·비밀번호·해시·토큰은 기록하지 않는다. 이 로그의 실제 운영 결과를 확인하기 전에는 전체 계정 장애의 원인을 확정하지 않는다.
+
+승인된 테스트 관리자에 숫자형 `expiresAt`(Unix milliseconds)을 지정하면 기한 이후 로그인과 기존 토큰의 업무 접근을 모두 차단한다. 일반 관리자에는 만료 기한을 자동으로 추가하지 않는다. 테스트 계정의 로그인 값과 비밀번호·해시는 저장소에 커밋하지 않는다. 진단 버전은 `/api/health`의 `release:auth-diagnostics-20261003-1`로 확인한다.

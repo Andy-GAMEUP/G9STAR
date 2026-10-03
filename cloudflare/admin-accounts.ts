@@ -2,6 +2,7 @@ import {randomBytes,timingSafeEqual,createHash} from 'node:crypto';
 import {DomainError} from '../backend/src/domain.ts';
 import {authenticate,issueToken} from '../backend/src/infrastructure/auth.ts';
 import {sendAdminTemporaryPassword} from './email.ts';
+import {rejectLogin} from './auth-failure.ts';
 const roles=['OPERATOR','MD','CS','FINANCE'];
 const fail=(message:string,status=422,code='VALIDATION_ERROR'):never=>{throw new DomainError(code,message,status)};
 const hash=async(password:string,salt=randomBytes(16).toString('hex'))=>{const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveBits']);const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(salt),iterations:100000,hash:'SHA-256'},key,256);return `${salt}:${Buffer.from(bits).toString('hex')}`};
@@ -31,17 +32,24 @@ export async function adminRequest(app:any,request:Request,env:any,body:ArrayBuf
  }
  if(path==='/api/v1/admin/login'&&method==='POST'){
   const i=input(),login=text(i.login,'로그인 ID').toLowerCase(),p=typeof i.password==='string'?i.password:'';
-  if(!p||p.length>200)fail('로그인 정보를 확인하세요.',401,'INVALID_CREDENTIALS');
+  const rejected=(reason:string,message='로그인 정보를 확인하세요.',code='INVALID_CREDENTIALS')=>rejectLogin('admin',reason,state.length,message,code);
+  if(!p||p.length>200)rejected('invalid_password_input');
   let account=state.find((a:any)=>a.email===login);
   if(!account){
-   const master=String(env.ADMIN_LOGIN||'starplayground99@gmail.com').toLowerCase();
-   if(login!==master||state.some((a:any)=>a.role==='SUPER_ADMIN')||!env.ADMIN_PASSWORD||!equal(p,env.ADMIN_PASSWORD))fail('로그인 정보를 확인하세요.',401,'INVALID_CREDENTIALS');
+   const master=String(env.ADMIN_LOGIN||'').trim().toLowerCase();
+   if(login!==master||state.some((a:any)=>a.role==='SUPER_ADMIN'))rejected('account_not_found');
+   if(!env.ADMIN_PASSWORD)rejected('bootstrap_password_not_configured');
+   if(!equal(p,env.ADMIN_PASSWORD))rejected('bootstrap_password_mismatch');
    account={id:crypto.randomUUID(),email:master,name:'마스터 관리자',role:'SUPER_ADMIN',status:'ACTIVE',passwordHash:await hash(p),createdAt:new Date().toISOString()};state.push(account);
   }else{
-   if(account.status!=='ACTIVE')fail('로그인 정보를 확인하세요.',401,'INVALID_CREDENTIALS');
+   if(account.status!=='ACTIVE')rejected('inactive_account');
+   if(account.expiresAt!==undefined&&account.expiresAt<=Date.now())rejected('expired_account');
    const recovered=account.recovery&&account.recovery.expiresAt>Date.now()&&await matches(p,account.recovery.passwordHash);
    if(recovered){account.passwordHash=account.recovery.passwordHash;account.temporaryPasswordExpiresAt=account.recovery.expiresAt;account.mustChangePassword=true;delete account.recovery;app.service.db.log('ADMIN_RECOVERY_USED',account.id,{})}
-   else if(account.mustChangePassword||!await matches(p,account.passwordHash))fail('로그인 정보를 확인하세요.',401,'INVALID_CREDENTIALS');
+   else {
+    if(!await matches(p,account.passwordHash))rejected('password_mismatch');
+    if(account.mustChangePassword)rejected('recovery_password_consumed','이미 사용한 임시 비밀번호입니다. 로그인된 화면에서 비밀번호를 변경하거나, 비밀번호 찾기로 새 임시 비밀번호를 발급받으세요.','TEMPORARY_PASSWORD_USED');
+   }
   }
   account.sessionId=crypto.randomUUID();account.lastLoginAt=new Date().toISOString();app.service.db.log('ADMIN_LOGIN',account.id,{email:account.email});
   return Response.json({accessToken:await issueToken({sub:account.id,role:account.role,sessionId:account.sessionId}),role:account.role,user:account.email,mustChangePassword:!!account.mustChangePassword,permissions:app.backoffice.roleMatrix[account.role]||[]});
@@ -50,7 +58,7 @@ export async function adminRequest(app:any,request:Request,env:any,body:ArrayBuf
  if(!adminPath&&principal.role==='CUSTOMER')return null;
  if(principal.role==='CUSTOMER')fail('권한이 없습니다.',403,'FORBIDDEN');
  const account=state.find((a:any)=>a.id===principal.sub);
- if(!account||account.status!=='ACTIVE'||!principal.sessionId||principal.sessionId!==account.sessionId||principal.role!==account.role)fail('다른 곳에서 로그인했거나 세션이 종료되었습니다. 다시 로그인하세요.',401,'ADMIN_SESSION_ENDED');
+ if(!account||account.status!=='ACTIVE'||(account.expiresAt!==undefined&&account.expiresAt<=Date.now())||!principal.sessionId||principal.sessionId!==account.sessionId||principal.role!==account.role)fail('다른 곳에서 로그인했거나 세션이 종료되었습니다. 다시 로그인하세요.',401,'ADMIN_SESSION_ENDED');
  if(account.mustChangePassword&&account.temporaryPasswordExpiresAt<=Date.now())fail('임시 비밀번호가 만료되었습니다. 다시 발급받으세요.',401,'ADMIN_SESSION_ENDED');
  if(account.mustChangePassword&&!['/api/v1/admin/session','/api/v1/admin/logout','/api/v1/admin/password'].includes(path))fail('새 비밀번호로 변경한 후 관리자 기능을 사용할 수 있습니다.',403,'PASSWORD_CHANGE_REQUIRED');
  if(!adminPath)return null;
