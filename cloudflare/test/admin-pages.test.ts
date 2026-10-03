@@ -14,16 +14,26 @@ test('권한이 없는 페이지 직접 접근도 허용된 업무 화면으로 
 test('상단 관리자 메뉴는 유효한 세션에만 표시되고 로그아웃은 서버 세션을 종료한다',async()=>{
  const source=readFileSync(new URL('../../prototype/beta.js',import.meta.url),'utf8');
  for(const status of [200,401]){const saved=new Map([['g9star-admin-session',JSON.stringify({accessToken:'test-token'})],['g9star-admin-return-page','estimates']]);const elements:any[]=[],login={hidden:false};let logoutCalled=false;
- const nav={querySelector:()=>login,append:(e:any)=>elements.push(e)};
+ const nav={querySelector:(q:string)=>q==='a[href="login.html"]'?login:null,append:(e:any)=>elements.push(e)};
  const document:any={querySelector:()=>nav,body:{classList:{contains:()=>false}},addEventListener(){},createElement:()=>({setAttribute(){},remove(){elements.splice(elements.indexOf(this),1)}})};
- const site:any={apiBase:'/api'};runInNewContext(source,{document,window:{G9STAR:site,addEventListener(){}},sessionStorage:{getItem:(k:string)=>saved.get(k),removeItem:(k:string)=>saved.delete(k)},fetch:async(url:string)=>{if(url.endsWith('/logout'))logoutCalled=true;return url==='/api/config'?Response.json({}):new Response('{}',{status});},setInterval(){},URL,alert(){}});
+ const site:any={apiBase:'/api'};runInNewContext(source,{document,window:{G9STAR:site,addEventListener(){},location:{assign(){}}},sessionStorage:{getItem:(k:string)=>saved.get(k),removeItem:(k:string)=>saved.delete(k)},fetch:async(url:string)=>{if(url.endsWith('/logout'))logoutCalled=true;return url==='/api/config'?Response.json({}):new Response('{}',{status});},setInterval(){},URL,alert(){}});
  await new Promise(resolve=>setImmediate(resolve));if(status===200){assert.equal(elements.length,2);assert.equal(login.hidden,true);assert.equal(elements[0].href,'/admin?page=estimates');assert.ok(elements[0].innerHTML.includes('<svg'));assert.equal(elements[1].textContent,'로그아웃');await elements[1].onclick();assert.equal(logoutCalled,true);assert.equal(elements.length,0);assert.equal(login.hidden,false);assert.equal(saved.has('g9star-admin-session'),false);}else{assert.equal(elements.length,0);assert.equal(login.hidden,false);assert.equal(saved.has('g9star-admin-session'),false);}
  }
 });
 test('회원 로그인도 상단 로그아웃으로 표시하며 관리자 콘솔 아이콘은 표시하지 않는다',async()=>{
  const source=readFileSync(new URL('../../prototype/beta.js',import.meta.url),'utf8'),saved=new Map([['earthplayground-portal-v2',JSON.stringify({token:'member-token'})]]),elements:any[]=[],login={hidden:false};let ended=false;
- const document:any={querySelector:()=>({querySelector:()=>login,append:(e:any)=>elements.push(e)}),body:{classList:{contains:()=>false}},addEventListener(){},createElement:()=>({setAttribute(){},remove(){elements.splice(elements.indexOf(this),1)}})};
+ const document:any={querySelector:()=>({querySelector:(q:string)=>q==='a[href="login.html"]'?login:null,append:(e:any)=>elements.push(e)}),body:{classList:{contains:()=>false}},addEventListener(){},createElement:()=>({setAttribute(){},remove(){elements.splice(elements.indexOf(this),1)}})};
  const location={href:'/'};
- runInNewContext(source,{document,window:{G9STAR:{apiBase:'/api'},addEventListener(){}},sessionStorage:{getItem:()=>null},localStorage:{getItem:(k:string)=>saved.get(k),removeItem:(k:string)=>saved.delete(k)},fetch:async(url:string)=>{if(url.endsWith('/logout'))ended=true;return Response.json({mustChangePassword:false})},setInterval(){},location,alert(){}});
+ runInNewContext(source,{document,window:{G9STAR:{apiBase:'/api'},addEventListener(){},location:{assign(){}}},sessionStorage:{getItem:()=>null},localStorage:{getItem:(k:string)=>saved.get(k),removeItem:(k:string)=>saved.delete(k)},fetch:async(url:string)=>{if(url.endsWith('/logout'))ended=true;return Response.json({mustChangePassword:false})},setInterval(){},location,alert(){}});
  await new Promise(resolve=>setImmediate(resolve));assert.equal(login.hidden,true);assert.equal(elements.length,1);assert.equal(elements[0].textContent,'로그아웃');await elements[0].onclick();assert.equal(ended,true);assert.equal(saved.size,0);assert.equal(login.hidden,false);assert.equal(elements.length,0);
+});
+
+test('홈 헤더는 비로그인·만료 때 로그인만, 회원 로그인 후 세 아이콘만 표시한다',async()=>{
+ const source=readFileSync(new URL('../../prototype/beta.js',import.meta.url),'utf8');
+ for(const mode of ['guest','member','expired']){const login:any={hidden:false},mypage:any={hidden:false},bell:any={hidden:false,dataset:{}},added:any[]=[];const saved=new Map(mode==='guest'?[]:[['earthplayground-portal-v2',JSON.stringify({token:'member-token'})]]);
+  const nav={querySelector:(q:string)=>q==='a[href="login.html"]'?login:q==='.header-mypage'?mypage:bell,append:(e:any)=>added.push(e)};
+  const document:any={querySelector:(q:string)=>q.includes('header-actions')?nav:null,body:{classList:{contains:()=>false}},addEventListener(){},createElement:()=>({setAttribute(){},remove(){added.splice(added.indexOf(this),1)}})};
+  runInNewContext(source,{document,window:{G9STAR:{apiBase:'/api'},addEventListener(){},location:{assign(){}}},sessionStorage:{getItem:()=>null},localStorage:{getItem:(k:string)=>saved.get(k),removeItem:(k:string)=>saved.delete(k)},fetch:async(url:string)=>url==='/api/config'?Response.json({}):new Response('{}',{status:mode==='expired'?401:200}),setInterval(){},URL,alert(){}});
+  await new Promise(resolve=>setImmediate(resolve));assert.equal(login.hidden,mode==='member');assert.equal(mypage.hidden,mode!=='member');assert.equal(bell.hidden,mode!=='member');assert.equal(added.length,mode==='member'?1:0);if(mode==='member'){assert.equal(mypage.href,'/mypage');assert.equal(bell.dataset.notificationUrl,'/mypage?tab=notifications');}if(mode==='expired')assert.equal(saved.size,0);
+ }
 });

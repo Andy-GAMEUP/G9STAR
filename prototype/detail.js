@@ -18,9 +18,6 @@ const showcasePhoto=document.querySelector('.showcase-photo');
 const productBuy=document.querySelector('.product-buy');
 
 // ------- 장바구니/관심공간 공통 -------
-const readCart=()=>{try{return JSON.parse(localStorage.getItem('earthplayground-cart')||'[]')}catch{return[]}};
-const addToCart=(name,price,space)=>{const cart=readCart(),item=cart.find(e=>e.name===name);if(item)item.quantity+=1;else cart.push({name,price,quantity:1,space});localStorage.setItem('earthplayground-cart',JSON.stringify(cart));return cart.reduce((s,e)=>s+e.quantity,0)};
-
 // ------- 상품 상세: 선택 카드 갱신 -------
 const applySelection=(name,price,productId)=>{const card=document.querySelector('.selection-card');if(!card)return;card.querySelector('strong').textContent=name;card.querySelector('small').textContent=price;const link=card.querySelector('a.compact-button');if(link&&productId)link.setAttribute('href','product.html?id='+encodeURIComponent(productId))};
 
@@ -61,16 +58,15 @@ async function renderShowcaseFromApi(id){
 }
 
 function bindFavorite(key,title,image){
- const favoriteKey='earthplayground-favorite-spaces',saveButton=document.querySelector('#saveShowcase');if(!saveButton)return;
- const readFavorites=()=>{try{return JSON.parse(localStorage.getItem(favoriteKey)||'[]')}catch{return[]}};
- const paint=()=>{const saved=readFavorites().some(item=>item.key===key);saveButton.setAttribute('aria-pressed',String(saved));saveButton.textContent=saved?'♥ 관심 공간 저장됨':'♡ 관심 공간 저장'};
- paint();
- saveButton.onclick=()=>{const favorites=readFavorites(),index=favorites.findIndex(item=>item.key===key);if(index>=0)favorites.splice(index,1);else favorites.unshift({key,title,image,savedAt:new Date().toISOString()});localStorage.setItem(favoriteKey,JSON.stringify(favorites));paint();showToast(index>=0?'관심 공간에서 삭제했습니다.':'관심 공간에 저장했습니다.')};
+ const button=document.querySelector('#saveShowcase');if(!button)return;const type=showcaseConfigs[key]?'space':'showcase';
+ const paint=items=>{const saved=items.some(r=>r.id===key&&r.type===type);button.setAttribute('aria-pressed',String(saved));button.textContent=saved?'♥ 관심 공간 저장됨':'♡ 관심 공간 저장';};
+ button.onclick=async()=>{if(!window.G9STAR.member.session().token){window.location.assign('/login');return;}button.disabled=true;try{const data=await window.G9STAR.member.request('favorites',{id:key,type,remove:button.getAttribute('aria-pressed')==='true'});paint(data.favorites);showToast('관심 공간을 저장했습니다.');}catch(e){showToast(e.message);}finally{button.disabled=false;}};
+ const hydrate=()=>{if(window.G9STAR.member?.session().token)window.G9STAR.member.request('profile').then(d=>paint(d.favorites)).catch(()=>{});};if(window.G9STAR.member)hydrate();else window.addEventListener('load',hydrate);
 }
 
 function bindShowcaseInteractions(){
  const cartButton=document.querySelector('#addHotspotCart');
- if(cartButton)cartButton.onclick=()=>{const card=document.querySelector('.selection-card'),name=card.querySelector('strong').textContent,price=card.querySelector('small').textContent,count=addToCart(name,price,apiId||'');cartButton.textContent=`장바구니 ${count}`;cartButton.classList.add('confirmed');showToast(`${name}을(를) 장바구니에 담았습니다.`)};
+ if(cartButton)cartButton.onclick=async()=>{if(!window.G9STAR.member.session().token){window.location.assign('/login');return;}const link=document.querySelector('.selection-card a.compact-button'),id=link?new URL(link.href).searchParams.get('id'):null;if(!id){showToast('상품 상세에서 장바구니에 담아 주세요.');return;}cartButton.disabled=true;try{await window.G9STAR.member.request('cart',{id,quantity:1,add:true});showToast('장바구니에 담았습니다.');}catch(e){showToast(e.message);}finally{cartButton.disabled=false;}};
  document.querySelectorAll('.scene-hotspot').forEach(point=>point.addEventListener('click',()=>{const card=document.querySelector('.selection-card');card.querySelector('strong').textContent=point.dataset.name;card.querySelector('small').textContent=point.dataset.price}));
  document.querySelectorAll('.thumb').forEach((thumb,index)=>thumb.addEventListener('click',()=>{document.querySelector('.thumb.active')?.classList.remove('active');thumb.classList.add('active');showcasePhoto.style.backgroundPosition=index===0?'center':index===1?'35% center':'70% center'}));
 }
@@ -95,6 +91,10 @@ async function renderProductFromApi(id){
   bindQuantity();
   const grid=document.querySelector('.showcase-grid');
   if(grid)grid.innerHTML=(p.showcases||[]).map(s=>`<a class="space-card" href="showcase.html?id=${encodeURIComponent(s.id)}"><div class="space-image" style="background-image:url('${imgSrc(s.imageUrl)}');background-size:cover;background-position:center"></div><h3>${escapeHtml(s.title)}</h3><p>실제 배치 매장</p></a>`).join('')||'<p class="empty-state">아직 배치된 매장이 없습니다.</p>';
+  const cartButton=document.querySelector('#productCart'),favorite=document.querySelector('#productFavorite');
+  const act=async(button,task)=>{if(!window.G9STAR.member.session().token){window.location.assign('/login');return;}button.disabled=true;try{await task();}catch(e){showToast(e.message);}finally{button.disabled=false;}};
+  if(cartButton){cartButton.disabled=false;cartButton.onclick=()=>act(cartButton,async()=>{const options=document.querySelectorAll('.option-list select');await window.G9STAR.member.request('cart',{id:p.id,quantity:Number(document.querySelector('#qty').textContent),color:options[0]?.value,size:options[1]?.value,add:true});showToast('장바구니에 담았습니다. 마이페이지에서 확인하세요.');});}
+  if(favorite){favorite.disabled=false;favorite.onclick=()=>act(favorite,async()=>{const result=await window.G9STAR.member.request('favorites',{id:p.id,type:'product',remove:favorite.getAttribute('aria-pressed')==='true'});const saved=result.favorites.some(r=>r.id===p.id&&r.type==='product');favorite.setAttribute('aria-pressed',String(saved));favorite.textContent=saved?'♥ 상품 찜 저장됨':'♡ 상품 찜';});const hydrateProduct=()=>{if(window.G9STAR.member?.session().token)window.G9STAR.member.request('profile').then(d=>{const saved=d.favorites.some(r=>r.id===p.id&&r.type==='product');favorite.setAttribute('aria-pressed',String(saved));favorite.textContent=saved?'♥ 상품 찜 저장됨':'♡ 상품 찜';}).catch(()=>{});};if(window.G9STAR.member)hydrateProduct();else window.addEventListener('load',hydrateProduct);}
   applyProductSeo(p);
  }catch(e){document.querySelector('.product-buy h1').textContent='상품을 불러오지 못했습니다';const sku=document.querySelector('.sku');if(sku)sku.textContent=e.message}
 }

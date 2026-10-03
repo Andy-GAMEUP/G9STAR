@@ -203,3 +203,22 @@ test('회원 인증번호는 만료·횟수 제한·메일 실패에 안전하�
   const state=await loadApplication(db,env);assert.equal((state.app as any).memberPending.some((p:any)=>p.email==='failed@example.com'),false);
  }finally{globalThis.fetch=old;await db.close()}
 });
+
+test('마이페이지 정보·찜·장바구니·알림은 본인에게만 저장되며 새 비밀번호 세션으로 이어진다',async()=>{
+ const db=await new Postgres().ready(),env=createEnv(db);const call=(p:string,b?:any,t?:string)=>worker.fetch(request(p,b,t),env,context);
+ try{
+  const first:any=await(await fixtureSignup(env,'첫 회원','first@example.com')).json(),second:any=await(await fixtureSignup(env,'다른 회원','second@example.com')).json();
+  assert.equal((await call('/v1/member-auth/profile')).status,401);
+  let response=await call('/v1/member-auth/profile',{name:'변경 회원',phone:'01098765432',memberId:second.member.id},first.accessToken);assert.equal(response.status,200);assert.equal((await response.json()).profile.name,'변경 회원');
+  assert.equal((await(await call('/v1/member-auth/profile',undefined,second.accessToken)).json()).profile.name,'다른 회원');
+  assert.equal((await call('/v1/member-auth/favorites',{type:'product',id:'PRD-101'},first.accessToken)).status,200);
+  assert.equal((await call('/v1/member-auth/cart',{id:'PRD-101',quantity:2,price:1},first.accessToken)).status,200);
+  assert.equal((await call('/v1/member-auth/cart',{id:'PRD-101',quantity:0},first.accessToken)).status,422);
+  const restored=await loadApplication(db,env);assert.equal((restored.app as any).memberAccounts.find((a:any)=>a.memberId===first.member.id).cart[0].quantity,2);
+  let profile:any=await(await call('/v1/member-auth/profile',undefined,first.accessToken)).json();assert.equal(profile.favorites.length,1);assert.equal(profile.cart.length,1);assert.notEqual(profile.cart[0].price,1);
+  const other:any=await(await call('/v1/member-auth/profile',undefined,second.accessToken)).json();assert.equal(other.favorites.length,0);assert.equal(other.cart.length,0);
+  response=await call('/v1/member-auth/password',{currentPassword:'Test123!',newPassword:'Fresh234!'},first.accessToken);assert.equal(response.status,200);const changed:any=await response.json();assert.ok(changed.accessToken);assert.equal((await call('/v1/member-auth/profile',undefined,first.accessToken)).status,401);
+  assert.equal((await call('/v1/member-auth/profile',undefined,changed.accessToken)).status,200);profile=await(await call('/v1/member-auth/notifications/read',{all:true},changed.accessToken)).json();assert.equal(profile.notifications.every((n:any)=>n.read),true);
+  assert.equal((await call('/v1/member-auth/cart',{id:'PRD-101',remove:true},changed.accessToken)).status,200);assert.equal((await call('/v1/member-auth/favorites',{id:'PRD-101',type:'product',remove:true},changed.accessToken)).status,200);
+ }finally{await db.close();}
+});

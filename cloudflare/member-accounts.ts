@@ -1,6 +1,7 @@
 import {randomBytes,timingSafeEqual,createHash} from 'node:crypto';
 import {DomainError} from '../backend/src/domain.ts';
 import {authenticate,issueToken} from '../backend/src/infrastructure/auth.ts';
+import {memberPortal} from './member-portal.ts';
 import {sendMemberMail} from './email.ts';
 const fail=(message:string,status=422,code='VALIDATION_ERROR'):never=>{throw new DomainError(code,message,status)};
 const digest=(s:string)=>createHash('sha256').update(s).digest('hex');
@@ -66,6 +67,7 @@ export async function memberRequest(app:any,request:Request,env:any,body:ArrayBu
  if(a.mustChangePassword&&!['session','password','logout'].some(x=>path==='/api/v1/member-auth/'+x))fail('새 비밀번호로 변경해 주세요.',403,'PASSWORD_CHANGE_REQUIRED');
  if(path.endsWith('/member-auth/session')&&method==='GET')return Response.json(safe(a));
  if(path.endsWith('/member-auth/logout')&&method==='POST'){a.sessionId=null;return Response.json({ok:true});}
- if(path.endsWith('/member-auth/password')&&method==='POST'){const i=input(),p=password(i.newPassword);if(typeof i.currentPassword!=='string'||!await matches(i.currentPassword,a.passwordHash))fail('기존 비밀번호가 일치하지 않습니다.',403);if(await matches(p,a.passwordHash))fail('새 비밀번호를 다르게 입력하세요.');a.passwordHash=await hash(p);a.mustChangePassword=false;delete a.recovery;delete a.temporaryPasswordExpiresAt;a.sessionId=null;return Response.json({ok:true});}
+ if(path.endsWith('/member-auth/password')&&method==='POST'){const i=input(),p=password(i.newPassword);if(typeof i.currentPassword!=='string'||!await matches(i.currentPassword,a.passwordHash))fail('기존 비밀번호가 일치하지 않습니다.',403);if(await matches(p,a.passwordHash))fail('새 비밀번호를 다르게 입력하세요.');a.passwordHash=await hash(p);a.mustChangePassword=false;delete a.recovery;delete a.temporaryPasswordExpiresAt;a.sessionId=crypto.randomUUID();a.notifications ||= [];a.notifications.unshift({id:crypto.randomUUID(),message:'비밀번호가 변경되었습니다.',createdAt:new Date().toISOString(),read:false});return Response.json(await accountResponse(a));}
+ const portal=memberPortal(app,a,path,method,input);if(portal)return portal;
  if(isAuth)fail('요청을 찾을 수 없습니다.',404);return null;
 }
